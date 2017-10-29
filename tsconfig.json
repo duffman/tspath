@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "outDir": "./bin",
+    "strict": false,
+    "baseUrl": "./",
+    "declaration": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": [
+    "./",
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

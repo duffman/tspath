@@ -1,18 +1,42 @@
-/*
-	Simple Parser used to strip block and line comments form a
-	JSON formatted string.
+/*=--------------------------------------------------------------=
 
-	Worth knowing: The parser treat " and ' the same, so it´s
-	possible to start a string with " and end it with '
+ TSPath - Typescript Path Resolver
 
-	This file is part of the TypeScript Path Igniter Project:
-	https://github.com/duffman/ts-path-igniter
+ Author : Patrik Forsberg
+ Email  : patrik.forsberg@coldmind.com
+ GitHub : https://github.com/duffman
 
-	@Author: Patrik Forsberg <patrik.forsberg@coldmind.com>
-	@Date: 2017-09-02
- */
+ I hope this piece of software brings joy into your life, makes
+ you sleep better knowing that you are no longer in path hell!
 
-let fs = require("fs");
+ Use this software free of charge, the only thing I ask is that
+ you obey to the terms stated in the license, i would also like
+ you to keep the file header intact.
+
+ Also, I would love to see you getting involved in the project!
+
+ Enjoy!
+
+ This software is subject to the LGPL v2 License, please find
+ the full license attached in LICENCE.md
+
+ =---------------------------------------------------------------=
+
+ Json Comment Stripper
+
+ Simple Parser used to strip block and line comments form a
+ JSON formatted string.
+
+ Worth knowing: The parser treat " and ' the same, so it´s
+ possible to start a string with " and end it with '
+
+ This file is part of the TypeScript Path Igniter Project:
+ https://github.com/duffman/ts-path-igniter
+
+ Author: Patrik Forsberg <patrik.forsberg@coldmind.com>
+ Date: 2017-09-02
+
+=---------------------------------------------------------------= */
 
 enum JsonParserState {
 	None,
@@ -20,11 +44,11 @@ enum JsonParserState {
 	InBlockComment,
 	InObject,
 	InQuote
-};
+}
 
 export class JsonCommentStripper {
-	currState = JsonParserState.None;
-	prevtState = JsonParserState.None;
+	private currState = JsonParserState.None;
+	private prevtState = JsonParserState.None;
 
 	constructor() {}
 
@@ -32,53 +56,26 @@ export class JsonCommentStripper {
 		return this.parse(data);
 	}
 
-	parserStateToStr(state: JsonParserState): string {
-		var strValue: string = "";
-
-		switch (state) {
-			case JsonParserState.None:
-				strValue = "None";
-				break;
-			case JsonParserState.InQuote:
-				strValue = "InQuote";
-				break;
-			case JsonParserState.InBlockComment:
-				strValue = "InBlockComment";
-				break;
-			case JsonParserState.InLineComment:
-				strValue = "InLineComment";
-				break;
-			case JsonParserState.InObject:
-				strValue = "InObject";
-				break;
-			default:
-				strValue = "Unknown";
-				break;
-		}
-
-		return strValue;
-	}
-
-	isQuote (char: string): boolean {
+	private isQuote (char: string): boolean {
 		return (char == "\"" || char == "'");
 	}
 
-	setState(state: JsonParserState) {
+	private setState(state: JsonParserState) {
 		if (state != this.currState) {
 			this.prevtState = this.currState;
 			this.currState = state;
 		}
 	}
 
-	inState(state: JsonParserState) {
+	private inState(state: JsonParserState) {
 		return this.currState == state;
 	}
 
-	setPrevState () {
+	private setPrevState () {
 		this.setState(this.prevtState);
 	}
 
-	inComment(): boolean {
+	private inComment(): boolean {
 		return this.inState(JsonParserState.InLineComment)
 			|| this.inState(JsonParserState.InBlockComment);
 	}

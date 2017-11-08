@@ -1,5 +1,3 @@
-#! /usr/bin/env node
-
 /*=--------------------------------------------------------------=
 
  TSPath - Typescript Path Resolver
@@ -24,19 +22,19 @@
 
 =----------------------------------------------------------------= */
 
-import { Utils } from "./utils";
 let fs             = require("fs");
 let path           = require('path');
 let esprima        = require("esprima");
 let escodegen      = require("escodegen");
-const chalk        = require("chalk");
-const ProgressBar  = require('progress');
-const log          = console.log;
+let chalk          = require("chalk");
 
+import { Utils }                from "./utils";
 import { JsonCommentStripper }  from "./json-comment-stripper";
 import { ProjectOptions }       from "./project-options";
 import { TS_CONFIG }            from "./type-definitions";
 import { FILE_ENCODING }        from "./type-definitions";
+
+const log          = console.log;
 
 export class ParserEngine {
 	public projectPath: string;
@@ -71,32 +69,37 @@ export class ParserEngine {
 		return true;
 	}
 
-	validateProjectPath(projectPath: string): boolean {
+	private validateProjectPath(projectPath: string): boolean {
 		var result = true;
 
-		var tsconfigFile = Utils.ensureTrailingPathDelimiter(projectPath);
-		tsconfigFile += TS_CONFIG;
+		let configFile = Utils.ensureTrailingPathDelimiter(projectPath);
+		configFile += TS_CONFIG;
 
 		if (!fs.existsSync(projectPath)) {
 			result = false;
 		}
 
-		if (!fs.existsSync(tsconfigFile)) {
+		if (!fs.existsSync(configFile)) {
 			log("TypeScript Compiler Configuration file " + chalk.underline.bold(TS_CONFIG) + " is missing!");
 		}
 
 		return result;
 	}
 
-
-	readProjectName() {
+	/**
+	 * Attempts to read the name property form package.json
+	 * @returns {string}
+	 */
+	private readProjectName(): string {
+		var projectName: string = null;
 		var filename = path.resolve(this.projectPath, "package.json");
-		console.log("##### package:", filename);
 
 		if (fs.existsSync(filename)) {
 			var json = require(filename);
-			console.log("#####:", json.name);
+			projectName = json.name;
 		}
+
+		return projectName;
 	}
 
 
@@ -109,11 +112,15 @@ export class ParserEngine {
 			this.exit(10);
 		}
 
-		log(chalk.yellow.bold("Parsing project at: ") + '"' +  this.projectPath + '"');
-
 		this.projectOptions = this.readConfig();
 
-		console.log("PROJECT NAME:", this.readProjectName());
+		let projectName = this.readProjectName();
+
+		if (!Utils.isEmpty(projectName)) {
+			log(chalk.yellow("Parsing project: ") + chalk.bold(projectName) + " " + chalk.underline(this.projectPath));
+		} else {
+			log(chalk.yellow.bold("Parsing project at: ") + '"' +  this.projectPath + '"');
+		}
 
 		this.appRoot = path.resolve(this.projectPath, this.projectOptions.baseUrl);
 		this.appRoot = path.resolve(this.appRoot, this.projectOptions.outDir);
@@ -122,30 +129,14 @@ export class ParserEngine {
 
 		this.walkSync(this.appRoot, fileList, ".js");
 
-		let barOpts = {
-			complete: '=',
-			incomplete: ' ',
-			width: 20,
-			total: fileList.length
-
-//			clear: true
-		};
-
-		var bar2 = new ProgressBar(':bar', { total: 10 });
-
-		let bar = new ProgressBar(' Parsing [:bar] :percent :etas', barOpts);
-
 		for (var i = 0; i < fileList.length; i++) {
 			let filename = fileList[i];
 			this.processFile(filename);
-			bar.tick(1);
 		}
 
 		log(chalk.bold("Total files processed:"), this.nrFilesProcessed);
 		log(chalk.bold("Total paths processed:"), this.nrPathsProcessed);
 
-//		console.log("Total files processed:", this.nrFilesProcessed);
-//		console.log("Total paths processed:", this.nrPathsProcessed);
 		console.timeEnd(PROCESS_TIME);
 		log(chalk.bold.green("Project is prepared, now run it normally!"));
 	}
@@ -277,10 +268,21 @@ export class ParserEngine {
 
 		this.tsConfig = JSON.parse(fileData);
 
-		let compilerOptions = this.tsConfig.compilerOptions;
-		let options = new ProjectOptions(compilerOptions);
+		let compilerOpt = this.tsConfig.compilerOptions;
 
-		return options;
+		let reqFields = [];
+		reqFields["baseUrl"] = compilerOpt.baseUrl;
+		reqFields["outDir"] = compilerOpt.outDir;
+
+		for (var key in reqFields) {
+			var field = reqFields[key];
+			if (Utils.isEmpty(field)) {
+				log(chalk.red.bold("Missing required field:") + ' "' + chalk.bold.underline(key) + '"');
+				this.exit(22);
+			}
+		}
+
+		return new ProjectOptions(compilerOpt);
 	}
 
 	/**
@@ -326,7 +328,8 @@ export class ParserEngine {
 			var file = files[i];
 
 			if (fs.statSync(path.join(dir, file)).isDirectory()) {
-				filelist = this.walkSync(path.join(dir, file), filelist, fileExtension);				}
+				filelist = this.walkSync(path.join(dir, file), filelist, fileExtension);
+			}
 			else {
 				var tmpExt = path.extname(file);
 

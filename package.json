@@ -1,15 +1,15 @@
 {
-  "name": "@patrikforsberg/tspath",
+  "name": "@coldmind/tspath",
   "version": "0.7.2",
   "description": "TypeScript Path Igniter resolves @paths specified in tsconfig",
   "scripts": {
-    "build":"tsc && node ./bin/build/post-build.js",
-    "test": "mocha -r ts-node/register test/**/process_path_test.ts",
-    "tspath": "node ./bin/tspath.js"
+    "build": "tsc",
+    "test": "mocha -r ts-node/register test/**.*/test.ts",
+    "tspath": "node ./dist/src/tspath.js"
   },
   "preferGlobal": true,
   "bin": {
-    "tspath": "./bin/tspath.js"
+    "tspath": "./dist/src/tspath.js"
   },
   "keywords": [
     "relative",
@@ -28,12 +28,9 @@
   "dependencies": {
     "@types/node": "^8.0.25",
     "chalk": "^2.3.0",
-    "co": "^4.6.0",
-    "co-prompt": "^1.0.0",
-    "commander": "^2.11.0",
     "escodegen": "^1.8.1",
     "esprima": "^4.0.0",
-    "progress": "^2.0.0",
+    "prompt-confirm": "^1.2.0",
     "typescript": "^2.4.2"
   },
   "devDependencies": {

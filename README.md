@@ -1,5 +1,13 @@
 # TSPath
 #### TypeScript Path Alias Resolver
+
+
+***
+
+:warning: **Important!** There have been reports of shaky behaviour when tspath
+is run with node 9.x, I am looking into the issue, if one of you who reported it
+happened to see where the problem occurs, please share :)
+
 ***
 
 Everyone working in a TypeScript project that grows beyond a certains limit will

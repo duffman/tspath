@@ -34,6 +34,10 @@ import { ProjectOptions }       from "./project-options";
 import { TS_CONFIG }            from "./type-definitions";
 import { FILE_ENCODING }        from "./type-definitions";
 
+import Project from "ts-simple-ast";
+
+const project = new Project();
+
 const log          = console.log;
 
 export class ParserEngine {
@@ -131,7 +135,15 @@ export class ParserEngine {
 
 		for (var i = 0; i < fileList.length; i++) {
 			let filename = fileList[i];
-			this.processFile(filename);
+			this.processJSFile(filename);
+		}
+
+		let fileList2 = new Array<string>();
+		this.walkSync(this.appRoot, fileList2, ".ts");
+
+		for (var i = 0; i < fileList2.length; i++) {
+			let filename = fileList2[i];
+			this.processTSFile(filename);
 		}
 
 		log(chalk.bold("Total files processed:"), this.nrFilesProcessed);
@@ -203,11 +215,7 @@ export class ParserEngine {
 		return resultNode;
 	}
 
-	/**
-	 * Extracts all the requires from a single file and processes the paths
-	 * @param filename
-	 */
-	processFile(filename: string) {
+	processJSFile(filename: string) {
 		this.nrFilesProcessed++;
 
 		let scope = this;
@@ -239,6 +247,26 @@ export class ParserEngine {
 			log(chalk.bold.red("Unable to write file:"), filename);
 			this.exit();
 		}
+	}
+
+	/**
+	 * Extracts all the exports from a single declaration file and processes the paths
+	 * @param filename
+	 */
+	processTSFile(filename: string) {
+		this.nrFilesProcessed++;
+		let scope = this;
+
+		const myFile = project.addExistingSourceFile(filename)
+		const declarations = myFile.getExportDeclarations()
+		declarations.forEach(declaration => {
+			const declarationValue = declaration.getModuleSpecifierValue(); 
+			if(declarationValue)
+			{
+				declaration.setModuleSpecifier(scope.getRelativePathForRequiredFile(filename, declaration.getModuleSpecifierValue()))
+			}
+		})
+		project.save();
 	}
 
 	/**

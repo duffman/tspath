@@ -65,7 +65,7 @@ export class ParentFileFinder {
 		let sep = path.sep;
 		var parts = startPath.split(sep);
 
-		var tmpStr = sep;
+		var tmpStr = <string> sep;
 
 		for (var i = 0; i < parts.length; i++) {
 			tmpStr = path.resolve(tmpStr, parts[i]);

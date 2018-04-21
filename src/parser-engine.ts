@@ -27,8 +27,8 @@ let path           = require('path');
 let esprima        = require("esprima");
 let escodegen      = require("escodegen");
 let chalk          = require("chalk");
-let Project		   = require("ts-simple-ast");
 
+import Project  				from "ts-simple-ast";
 import { Utils }                from "./utils";
 import { JsonCommentStripper }  from "./json-comment-stripper";
 import { ProjectOptions }       from "./project-options";

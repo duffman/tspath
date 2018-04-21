@@ -28,13 +28,13 @@ let path = require('path');
 let esprima = require("esprima");
 let escodegen = require("escodegen");
 let chalk = require("chalk");
-let Project = require("ts-simple-ast");
+const ts_simple_ast_1 = require("ts-simple-ast");
 const utils_1 = require("./utils");
 const json_comment_stripper_1 = require("./json-comment-stripper");
 const project_options_1 = require("./project-options");
 const type_definitions_1 = require("./type-definitions");
 const type_definitions_2 = require("./type-definitions");
-const project = new Project();
+const project = new ts_simple_ast_1.default();
 const log = console.log;
 class ParserEngine {
     constructor() {

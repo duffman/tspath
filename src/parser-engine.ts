@@ -27,6 +27,7 @@ let path           = require('path');
 let esprima        = require("esprima");
 let escodegen      = require("escodegen");
 let chalk          = require("chalk");
+let Project		   = require("ts-simple-ast");
 
 import { Utils }                from "./utils";
 import { JsonCommentStripper }  from "./json-comment-stripper";
@@ -34,10 +35,7 @@ import { ProjectOptions }       from "./project-options";
 import { TS_CONFIG }            from "./type-definitions";
 import { FILE_ENCODING }        from "./type-definitions";
 
-import Project from "ts-simple-ast";
-
-const project = new Project();
-
+const project 	   = new Project();
 const log          = console.log;
 
 export class ParserEngine {
@@ -258,12 +256,12 @@ export class ParserEngine {
 		let scope = this;
 
 		const myFile = project.addExistingSourceFile(filename)
-		const declarations = myFile.getExportDeclarations()
-		declarations.forEach(declaration => {
-			const declarationValue = declaration.getModuleSpecifierValue(); 
-			if(declarationValue)
+		const exportDeclarations = myFile.getExportDeclarations()
+		exportDeclarations.forEach(exportDeclaration => {
+			const exportDeclarationValue = exportDeclaration.getModuleSpecifierValue(); 
+			if(exportDeclarationValue)
 			{
-				declaration.setModuleSpecifier(scope.getRelativePathForRequiredFile(filename, declaration.getModuleSpecifierValue()))
+				exportDeclaration.setModuleSpecifier(scope.getRelativePathForRequiredFile(filename, exportDeclarationValue));
 			}
 		})
 		project.save();

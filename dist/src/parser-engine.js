@@ -28,11 +28,13 @@ let path = require('path');
 let esprima = require("esprima");
 let escodegen = require("escodegen");
 let chalk = require("chalk");
+let Project = require("ts-simple-ast");
 const utils_1 = require("./utils");
 const json_comment_stripper_1 = require("./json-comment-stripper");
 const project_options_1 = require("./project-options");
 const type_definitions_1 = require("./type-definitions");
 const type_definitions_2 = require("./type-definitions");
+const project = new Project();
 const log = console.log;
 class ParserEngine {
     constructor() {
@@ -101,7 +103,13 @@ class ParserEngine {
         this.walkSync(this.appRoot, fileList, ".js");
         for (var i = 0; i < fileList.length; i++) {
             let filename = fileList[i];
-            this.processFile(filename);
+            this.processJSFile(filename);
+        }
+        let fileList2 = new Array();
+        this.walkSync(this.appRoot, fileList2, ".ts");
+        for (var i = 0; i < fileList2.length; i++) {
+            let filename = fileList2[i];
+            this.processTSFile(filename);
         }
         log(chalk.bold("Total files processed:"), this.nrFilesProcessed);
         log(chalk.bold("Total paths processed:"), this.nrPathsProcessed);
@@ -157,11 +165,7 @@ class ParserEngine {
         }
         return resultNode;
     }
-    /**
-     * Extracts all the requires from a single file and processes the paths
-     * @param filename
-     */
-    processFile(filename) {
+    processJSFile(filename) {
         this.nrFilesProcessed++;
         let scope = this;
         let inputSourceCode = fs.readFileSync(filename, type_definitions_2.FILE_ENCODING);
@@ -188,6 +192,23 @@ class ParserEngine {
             log(chalk.bold.red("Unable to write file:"), filename);
             this.exit();
         }
+    }
+    /**
+     * Extracts all the exports from a single declaration file and processes the paths
+     * @param filename
+     */
+    processTSFile(filename) {
+        this.nrFilesProcessed++;
+        let scope = this;
+        const myFile = project.addExistingSourceFile(filename);
+        const exportDeclarations = myFile.getExportDeclarations();
+        exportDeclarations.forEach(exportDeclaration => {
+            const exportDeclarationValue = exportDeclaration.getModuleSpecifierValue();
+            if (exportDeclarationValue) {
+                exportDeclaration.setModuleSpecifier(scope.getRelativePathForRequiredFile(filename, exportDeclarationValue));
+            }
+        });
+        project.save();
     }
     /**
      * Saves file contents to disk

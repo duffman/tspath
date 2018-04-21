@@ -30,11 +30,12 @@ export declare class ParserEngine {
      * @returns {any}
      */
     processJsRequire(node: any, sourceFilename: string): any;
+    processJSFile(filename: string): void;
     /**
-     * Extracts all the requires from a single file and processes the paths
+     * Extracts all the exports from a single declaration file and processes the paths
      * @param filename
      */
-    processFile(filename: string): void;
+    processTSFile(filename: string): void;
     /**
      * Saves file contents to disk
      * @param filename

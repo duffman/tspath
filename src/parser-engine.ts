@@ -127,20 +127,20 @@ export class ParserEngine {
 		this.appRoot = path.resolve(this.projectPath, this.projectOptions.baseUrl);
 		this.appRoot = path.resolve(this.appRoot, this.projectOptions.outDir);
 
-		let fileList = new Array<string>();
+		let JSfileList = new Array<string>();
 
-		this.walkSync(this.appRoot, fileList, ".js");
+		this.walkSync(this.appRoot, JSfileList, ".js");
 
-		for (var i = 0; i < fileList.length; i++) {
-			let filename = fileList[i];
+		for (var i = 0; i < JSfileList.length; i++) {
+			let filename = JSfileList[i];
 			this.processJSFile(filename);
 		}
 
-		let fileList2 = new Array<string>();
-		this.walkSync(this.appRoot, fileList2, ".ts");
+		let TSFileList = new Array<string>();
+		this.walkSync(this.appRoot, TSFileList, ".ts");
 
-		for (var i = 0; i < fileList2.length; i++) {
-			let filename = fileList2[i];
+		for (var i = 0; i < TSFileList.length; i++) {
+			let filename = TSFileList[i];
 			this.processTSFile(filename);
 		}
 
@@ -187,6 +187,8 @@ export class ParserEngine {
 			}
 		}
 
+		this.nrPathsProcessed++;
+
 		return jsRequire;
 	}
 
@@ -206,8 +208,6 @@ export class ParserEngine {
 		if (!Utils.isEmpty(requireInJsFile) && Utils.fileHavePath(requireInJsFile)) {
 			let relativePath = this.getRelativePathForRequiredFile(sourceFilename, requireInJsFile);
 			resultNode = {type: "Literal", value: relativePath, raw: relativePath};
-
-			this.nrPathsProcessed++;
 		}
 
 		return resultNode;
@@ -255,13 +255,23 @@ export class ParserEngine {
 		this.nrFilesProcessed++;
 		let scope = this;
 
-		const myFile = project.addExistingSourceFile(filename)
-		const exportDeclarations = myFile.getExportDeclarations()
+		const fileToProcess = project.addExistingSourceFile(filename)
+		const exportDeclarations = fileToProcess.getExportDeclarations()
+		const importDeclarations = fileToProcess.getImportDeclarations();
+
 		exportDeclarations.forEach(exportDeclaration => {
 			const exportDeclarationValue = exportDeclaration.getModuleSpecifierValue(); 
 			if(exportDeclarationValue)
 			{
 				exportDeclaration.setModuleSpecifier(scope.getRelativePathForRequiredFile(filename, exportDeclarationValue));
+			}
+		})
+
+		importDeclarations.forEach(importDeclaration => {
+			const importDeclarationValue = importDeclaration.getModuleSpecifierValue(); 
+			if(importDeclarationValue)
+			{
+				importDeclaration.setModuleSpecifier(scope.getRelativePathForRequiredFile(filename, importDeclarationValue));
 			}
 		})
 		project.save();

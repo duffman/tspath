@@ -99,16 +99,16 @@ class ParserEngine {
         }
         this.appRoot = path.resolve(this.projectPath, this.projectOptions.baseUrl);
         this.appRoot = path.resolve(this.appRoot, this.projectOptions.outDir);
-        let fileList = new Array();
-        this.walkSync(this.appRoot, fileList, ".js");
-        for (var i = 0; i < fileList.length; i++) {
-            let filename = fileList[i];
+        let JSfileList = new Array();
+        this.walkSync(this.appRoot, JSfileList, ".js");
+        for (var i = 0; i < JSfileList.length; i++) {
+            let filename = JSfileList[i];
             this.processJSFile(filename);
         }
-        let fileList2 = new Array();
-        this.walkSync(this.appRoot, fileList2, ".ts");
-        for (var i = 0; i < fileList2.length; i++) {
-            let filename = fileList2[i];
+        let TSFileList = new Array();
+        this.walkSync(this.appRoot, TSFileList, ".ts");
+        for (var i = 0; i < TSFileList.length; i++) {
+            let filename = TSFileList[i];
             this.processTSFile(filename);
         }
         log(chalk.bold("Total files processed:"), this.nrFilesProcessed);
@@ -144,6 +144,7 @@ class ParserEngine {
                 return relativePath;
             }
         }
+        this.nrPathsProcessed++;
         return jsRequire;
     }
     /**
@@ -161,7 +162,6 @@ class ParserEngine {
         if (!utils_1.Utils.isEmpty(requireInJsFile) && utils_1.Utils.fileHavePath(requireInJsFile)) {
             let relativePath = this.getRelativePathForRequiredFile(sourceFilename, requireInJsFile);
             resultNode = { type: "Literal", value: relativePath, raw: relativePath };
-            this.nrPathsProcessed++;
         }
         return resultNode;
     }
@@ -200,12 +200,19 @@ class ParserEngine {
     processTSFile(filename) {
         this.nrFilesProcessed++;
         let scope = this;
-        const myFile = project.addExistingSourceFile(filename);
-        const exportDeclarations = myFile.getExportDeclarations();
+        const fileToProcess = project.addExistingSourceFile(filename);
+        const exportDeclarations = fileToProcess.getExportDeclarations();
+        const importDeclarations = fileToProcess.getImportDeclarations();
         exportDeclarations.forEach(exportDeclaration => {
             const exportDeclarationValue = exportDeclaration.getModuleSpecifierValue();
             if (exportDeclarationValue) {
                 exportDeclaration.setModuleSpecifier(scope.getRelativePathForRequiredFile(filename, exportDeclarationValue));
+            }
+        });
+        importDeclarations.forEach(importDeclaration => {
+            const importDeclarationValue = importDeclaration.getModuleSpecifierValue();
+            if (importDeclarationValue) {
+                importDeclaration.setModuleSpecifier(scope.getRelativePathForRequiredFile(filename, importDeclarationValue));
             }
         });
         project.save();

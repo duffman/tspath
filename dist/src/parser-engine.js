@@ -95,8 +95,7 @@ class ParserEngine {
         else {
             log(chalk.yellow.bold("Parsing project at: ") + '"' + this.projectPath + '"');
         }
-        this.appRoot = path.resolve(this.projectPath, this.projectOptions.baseUrl);
-        this.appRoot = path.resolve(this.appRoot, this.projectOptions.outDir);
+        this.appRoot = path.resolve(this.projectPath, this.projectOptions.outDir);
         let fileList = new Array();
         this.walkSync(this.appRoot, fileList, ".js");
         for (var i = 0; i < fileList.length; i++) {

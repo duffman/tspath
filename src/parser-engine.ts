@@ -122,8 +122,7 @@ export class ParserEngine {
 			log(chalk.yellow.bold("Parsing project at: ") + '"' +  this.projectPath + '"');
 		}
 
-		this.appRoot = path.resolve(this.projectPath, this.projectOptions.baseUrl);
-		this.appRoot = path.resolve(this.appRoot, this.projectOptions.outDir);
+    this.appRoot = path.resolve(this.projectPath, this.projectOptions.outDir);
 
 		let fileList = new Array<string>();
 

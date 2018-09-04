@@ -125,6 +125,10 @@ class ParserEngine {
                 var result = jsRequire.replace(alias, mapping);
                 utils_1.Utils.replaceDoubleSlashes(result);
                 var absoluteJsRequire = path.join(this.appRoot, result);
+                if (!fs.existsSync(`${absoluteJsRequire}.js`)) {
+                    var newResult = jsRequire.replace(alias, '');
+                    absoluteJsRequire = path.join(this.appRoot, newResult);
+                }
                 var sourceDir = path.dirname(sourceFilename);
                 let relativePath = path.relative(sourceDir, absoluteJsRequire);
                 /* If the path does not start with .. it´ not a sub directory

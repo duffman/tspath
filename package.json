@@ -1,6 +1,6 @@
 {
   "name": "@coldmind/tspath",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "description": "TypeScript Path Igniter resolves @paths specified in tsconfig",
   "scripts": {
     "build": "tsc",

@@ -14,12 +14,11 @@ class TSPath {
     constructor() {
         this.engine = new parser_engine_1.ParserEngine();
         log(chalk.yellow("TSPath " + pkg.version));
-        let args = process.argv.slice(2);
-        let param = args[0];
+        let param = TSPath.parseCommandLineParam("-f");
         let projectPath = process.cwd();
         let findResult = parent_file_finder_1.ParentFileFinder.findFile(projectPath, type_definitions_1.TS_CONFIG);
         var scope = this;
-        if (param == "-f" && findResult.fileFound) {
+        if (param && findResult.fileFound) {
             scope.processPath(findResult.path);
         }
         else if (findResult.fileFound) {
@@ -39,12 +38,17 @@ class TSPath {
             this.engine.execute();
         }
     }
-    parseCommandLineParam() {
+    static parseCommandLineParam(id) {
         let args = process.argv.slice(2);
         var param = null;
-        if (args.length != 1) {
-            param = args[0];
+        const argsLen = args.length;
+        let counter = 0;
+        while (param === null && counter < argsLen) {
+            if (args[counter] === id)
+                param = args[counter];
+            counter++;
         }
+        ;
         return param;
     }
 }

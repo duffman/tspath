@@ -24,65 +24,68 @@
 
  =----------------------------------------------------------------= */
 
-let fs         = require("fs");
-let path       = require("path");
-let chalk      = require("chalk");
-const log      = console.log;
+let fs = require("fs");
+let path = require("path");
+let chalk = require("chalk");
+const log = console.log;
 
 let Confirm = require('prompt-confirm');
 
-import { ParserEngine }     from "./parser-engine";
+import { ParserEngine } from "./parser-engine";
 import { ParentFileFinder } from "./parent-file-finder";
-import { TS_CONFIG }        from "./type-definitions";
+import { TS_CONFIG } from "./type-definitions";
 
 const pkg = require('../package.json');
 
 export class TSPath {
-	private engine = new ParserEngine();
+    private engine = new ParserEngine();
 
-	constructor() {
-		log(chalk.yellow("TSPath " + pkg.version));
-		let args = process.argv.slice(2);
-		let param = args[0];
+    constructor() {
+        log(chalk.yellow("TSPath " + pkg.version));
 
-		let projectPath = process.cwd();
+        let param = TSPath.parseCommandLineParam("-f");
 
-		let findResult = ParentFileFinder.findFile(projectPath, TS_CONFIG);
+        let projectPath = process.cwd();
 
-		var scope = this;
+        let findResult = ParentFileFinder.findFile(projectPath, TS_CONFIG);
 
-		if (param == "-f" && findResult.fileFound) {
-			scope.processPath(findResult.path);
+        var scope = this;
 
-		} else if (findResult.fileFound) {
-			let confirm = new Confirm("Process project at: <"  + findResult.path +  "> ?")
-				.ask(function(answer) {
-					if (answer) {
-						scope.processPath(findResult.path);
-					}
-				});
+        if (param && findResult.fileFound) {
+            scope.processPath(findResult.path);
 
-		} else {
-			log(chalk.bold("No project root found!"));
-		}
-	}
+        } else if (findResult.fileFound) {
+            let confirm = new Confirm("Process project at: <" + findResult.path + "> ?")
+                .ask(function (answer) {
+                    if (answer) {
+                        scope.processPath(findResult.path);
+                    }
+                });
 
-	private processPath(projectPath: string) {
-		if (this.engine.setProjectPath(projectPath)) {
-			this.engine.execute();
-		}
-	}
+        } else {
+            log(chalk.bold("No project root found!"));
+        }
+    }
 
-	public parseCommandLineParam(): string {
-		let args = process.argv.slice(2);
-		var param: string = null;
+    private processPath(projectPath: string) {
+        if (this.engine.setProjectPath(projectPath)) {
+            this.engine.execute();
+        }
+    }
 
-		if (args.length != 1) {
-			param = args[0];
-		}
+    public static parseCommandLineParam(id: string): string {
+        let args = process.argv.slice(2);
+        var param: string = null;
+        const argsLen = args.length;
+        let counter = 0;
+        while (param === null && counter < argsLen) {
+            if (args[counter] === id)
+                param = args[counter];
+            counter++;
+        };
 
-		return param;
-	}
+        return param;
+    }
 }
 
 let tspath = new TSPath();

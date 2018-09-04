@@ -33,6 +33,7 @@ const json_comment_stripper_1 = require("./json-comment-stripper");
 const project_options_1 = require("./project-options");
 const type_definitions_1 = require("./type-definitions");
 const type_definitions_2 = require("./type-definitions");
+const tspath_1 = require("./tspath");
 const log = console.log;
 class ParserEngine {
     constructor() {
@@ -95,8 +96,7 @@ class ParserEngine {
         else {
             log(chalk.yellow.bold("Parsing project at: ") + '"' + this.projectPath + '"');
         }
-        this.appRoot = path.resolve(this.projectPath, this.projectOptions.baseUrl);
-        this.appRoot = path.resolve(this.appRoot, this.projectOptions.outDir);
+        this.appRoot = path.resolve(this.projectPath, this.projectOptions.outDir);
         let fileList = new Array();
         this.walkSync(this.appRoot, fileList, ".js");
         for (var i = 0; i < fileList.length; i++) {
@@ -179,7 +179,9 @@ class ParserEngine {
                 node.arguments[0] = scope.processJsRequire(node.arguments[0], filename);
             }
         });
-        let option = { comment: true, format: { compact: true, quotes: '"' } };
+        let option = { comment: true };
+        if (tspath_1.TSPath.parseCommandLineParam("-c"))
+            option['format'] = { compact: true, quotes: '"' };
         let finalSource = escodegen.generate(ast, option);
         try {
             this.saveFileContents(filename, finalSource);

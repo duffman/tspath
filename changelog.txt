@@ -1,0 +1,6 @@
+
+V 13.9
+Cut alias prefix for mapping comparison
+Fixes bug regarding Aliases starting with same char seq, e.g @db and @dbCore
+
+outDir should be independent of baseUrl #2

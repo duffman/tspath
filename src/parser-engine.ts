@@ -42,8 +42,12 @@ export class ParserEngine {
 	nrFilesProcessed : number = 0;
 	nrPathsProcessed : number = 0;
 	appRoot          : string;
+	workingDir       : string;
+	distRoot         : string;
+	compactMode      : boolean = true;
 	projectOptions   : ProjectOptions;
 	tsConfig         : any;
+	fileFilter       : Array<string>;
 
 	constructor() {}
 
@@ -53,12 +57,6 @@ export class ParserEngine {
 	}
 
 	public setProjectPath(projectPath: string): boolean {
-
-		/*
-		this.projectPath = process.cwd();
-		console.log("CURRENT:", this.projectPath);
-		*/
-
 		if (!Utils.isEmpty(projectPath) && !this.validateProjectPath(projectPath)) {
 			log(chalk.red.bold("Project Path \"" + chalk.underline(projectPath) + "\" is invalid!"));
 			return false;
@@ -69,8 +67,18 @@ export class ParserEngine {
 		return true;
 	}
 
+	/**
+	 * Set the accepted file extensions, ensure leading . (dot)
+	 * @param {Array<string>} filter
+	 */
+	public setFileFilter(filter: Array<string>) {
+		this.fileFilter = filter.map((e) => {
+			return !e.startsWith(".") ? "." + e : e;
+		});
+	}
+
 	private validateProjectPath(projectPath: string): boolean {
-		var result = true;
+		let result = true;
 
 		let configFile = Utils.ensureTrailingPathDelimiter(projectPath);
 		configFile += TS_CONFIG;
@@ -102,7 +110,9 @@ export class ParserEngine {
 		return projectName;
 	}
 
-
+	/**
+	 * Parse project and resolve paths
+	 */
 	public execute() {
 		const  PROCESS_TIME = "Operation finished in";
 		console.time(PROCESS_TIME);
@@ -113,7 +123,6 @@ export class ParserEngine {
 		}
 
 		this.projectOptions = this.readConfig();
-
 		let projectName = this.readProjectName();
 
 		if (!Utils.isEmpty(projectName)) {
@@ -124,12 +133,13 @@ export class ParserEngine {
 
 		this.appRoot = path.resolve(this.projectPath, this.projectOptions.baseUrl);
 		this.appRoot = path.resolve(this.appRoot, this.projectOptions.outDir);
+		this.distRoot = path.resolve(this.projectPath, this.projectOptions.outDir);
 
 		let fileList = new Array<string>();
 
-		this.walkSync(this.appRoot, fileList, ".js");
+		this.walkSync(this.distRoot, fileList, ".js");
 
-		for (var i = 0; i < fileList.length; i++) {
+		for (let i = 0; i < fileList.length; i++) {
 			let filename = fileList[i];
 			this.processFile(filename);
 		}
@@ -150,19 +160,24 @@ export class ParserEngine {
 	getRelativePathForRequiredFile(sourceFilename: string, jsRequire: string) {
 		let options = this.projectOptions;
 
-		for (var alias in options.pathMappings) {
-			var mapping = options.pathMappings[alias];
+		for (let alias in options.pathMappings) {
+			let mapping = options.pathMappings[alias];
 
 			//TODO: Handle * properly
 			alias = Utils.stripWildcard(alias);
 			mapping = Utils.stripWildcard(mapping);
 
-			if (jsRequire.substring(0, alias.length) == alias) {
-				var result = jsRequire.replace(alias, mapping);
-				Utils.replaceDoubleSlashes(result);
+			// 2018-06-02: Workaround for bug with same prefix Aliases e.g @db and @dbCore
+			// Cut alias prefix for mapping comparison
+			let requirePrefix = jsRequire.substring(0, jsRequire.indexOf(path.sep))
 
-				var absoluteJsRequire = path.join(this.appRoot, result);
-				var sourceDir = path.dirname(sourceFilename);
+			if (requirePrefix == alias) {
+				let result = jsRequire.replace(alias, mapping);
+				Utils.replaceDoubleSlashes(result);
+				result = Utils.ensureTrailingPathDelimiter(result);
+
+				let absoluteJsRequire = path.join(this.distRoot, result);
+				let sourceDir = path.dirname(sourceFilename);
 
 				let relativePath = path.relative(sourceDir, absoluteJsRequire);
 
@@ -173,7 +188,8 @@ export class ParserEngine {
 					relativePath = "./" + relativePath;
 				}
 
-				return relativePath;
+				jsRequire = relativePath;
+				break;
 			}
 		}
 
@@ -212,7 +228,7 @@ export class ParserEngine {
 
 		let scope = this;
 		let inputSourceCode = fs.readFileSync(filename, FILE_ENCODING);
-		var ast = null;
+		let ast = null;
 
 		try {
 			ast = esprima.parse(inputSourceCode); //, { raw: true, tokens: true, range: true, comment: true });
@@ -229,7 +245,7 @@ export class ParserEngine {
 			}
 		});
 
-		let option = { comment: true, format: { compact: true,  quotes: '"' }};
+		let option = { comment: true, format: { compact: this.compactMode,  quotes: '"' }};
 		let finalSource = escodegen.generate(ast, option);
 
 		try {
@@ -247,7 +263,7 @@ export class ParserEngine {
 	 * @param fileContents
 	 */
 	saveFileContents(filename: string, fileContents: string) {
-		var error: any = false;
+		let error: any = false;
 		fs.writeFileSync(filename, fileContents, FILE_ENCODING, error);
 
 		if (error) {
@@ -274,8 +290,8 @@ export class ParserEngine {
 		reqFields["baseUrl"] = compilerOpt.baseUrl;
 		reqFields["outDir"] = compilerOpt.outDir;
 
-		for (var key in reqFields) {
-			var field = reqFields[key];
+		for (let key in reqFields) {
+			let field = reqFields[key];
 			if (Utils.isEmpty(field)) {
 				log(chalk.red.bold("Missing required field:") + ' "' + chalk.bold.underline(key) + '"');
 				this.exit(22);
@@ -293,9 +309,9 @@ export class ParserEngine {
 	 */
 	traverseSynTree(ast, scope, func) {
 		func(ast);
-		for (var key in ast) {
+		for (let key in ast) {
 			if (ast.hasOwnProperty(key)) {
-				var child = ast[key];
+				let child = ast[key];
 
 				if (typeof child === 'object' && child !== null) {
 					if (Array.isArray(child)) {
@@ -311,6 +327,16 @@ export class ParserEngine {
 	}
 
 	/**
+	 * Match a given file extension with the configured extensions
+	 * @param {string} fileExtension - ".xxx" or "xxx
+	 * @returns {boolean}
+	 */
+	private matchExtension(fileExtension: string): boolean {
+		if (Utils.isEmpty(fileExtension) || this.fileFilter.length == 0) return false;
+		return this.fileFilter.indexOf(fileExtension) > -1;
+	}
+
+	/**
 	 * Recursively walking a directory structure and collect files
 	 * @param dir
 	 * @param filelist
@@ -318,22 +344,21 @@ export class ParserEngine {
 	 * @returns {Array<string>}
 	 */
 	public walkSync(dir: string, filelist: Array<string>, fileExtension?: string) {
-		var scope = this;
-		var	files = fs.readdirSync(dir);
+		let scope = this;
+		let	files = fs.readdirSync(dir);
 		filelist = filelist || [];
-
 		fileExtension = fileExtension === undefined ? "" : fileExtension;
 
-		for (var i = 0; i < files.length; i++) {
-			var file = files[i];
+		for (let i = 0; i < files.length; i++) {
+			let file = files[i];
 
 			if (fs.statSync(path.join(dir, file)).isDirectory()) {
 				filelist = this.walkSync(path.join(dir, file), filelist, fileExtension);
 			}
 			else {
-				var tmpExt = path.extname(file);
+				let tmpExt = path.extname(file);
 
-				if ((fileExtension.length > 0 && tmpExt == fileExtension)
+				if ((fileExtension.length > 0 && scope.matchExtension(fileExtension))
 					|| (fileExtension.length < 1)
 					|| (fileExtension == "*.*")) {
 					let fullFilename = path.join(dir, file);

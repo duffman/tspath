@@ -24,18 +24,18 @@
 
  =----------------------------------------------------------------= */
 
+const pkg      = require('../package.json');
 let fs         = require("fs");
 let path       = require("path");
 let chalk      = require("chalk");
-const log      = console.log;
-
-let Confirm = require('prompt-confirm');
+let log        = console.log;
+let Confirm    = require('prompt-confirm');
+let yargs      = require("yargs").argv;
 
 import { ParserEngine }     from "./parser-engine";
 import { ParentFileFinder } from "./parent-file-finder";
 import { TS_CONFIG }        from "./type-definitions";
 
-const pkg = require('../package.json');
 
 export class TSPath {
 	private engine = new ParserEngine();
@@ -44,14 +44,30 @@ export class TSPath {
 		log(chalk.yellow("TSPath " + pkg.version));
 		let args = process.argv.slice(2);
 		let param = args[0];
-
+		let filter = ["js"];
+		let force: boolean = (yargs.force || yargs.f);
 		let projectPath = process.cwd();
-
+		let compactOutput = yargs.preserve ? false : true;
 		let findResult = ParentFileFinder.findFile(projectPath, TS_CONFIG);
 
-		var scope = this;
+		let scope = this;
 
-		if (param == "-f" && findResult.fileFound) {
+		if (yargs.ext || yargs.filter) {
+			let argFilter = yargs.ext ? yargs.ext : yargs.filter;
+			filter = argFilter.split(",").map((ext) => {
+				return ext.replace(/\s/g, "");
+			});
+		}
+
+		if (filter.length === 0) {
+			log(chalk.bold.red("File filter missing!"));
+			process.exit(23);
+		}
+
+		this.engine.compactMode = compactOutput;
+		this.engine.setFileFilter(filter);
+
+		if (force && findResult.fileFound) {
 			scope.processPath(findResult.path);
 
 		} else if (findResult.fileFound) {
@@ -71,17 +87,6 @@ export class TSPath {
 		if (this.engine.setProjectPath(projectPath)) {
 			this.engine.execute();
 		}
-	}
-
-	public parseCommandLineParam(): string {
-		let args = process.argv.slice(2);
-		var param: string = null;
-
-		if (args.length != 1) {
-			param = args[0];
-		}
-
-		return param;
 	}
 }
 

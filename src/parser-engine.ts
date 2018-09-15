@@ -42,7 +42,6 @@ export class ParserEngine {
 	nrFilesProcessed : number = 0;
 	nrPathsProcessed : number = 0;
 	appRoot          : string;
-	workingDir       : string;
 	distRoot         : string;
 	compactMode      : boolean = true;
 	projectOptions   : ProjectOptions;
@@ -99,11 +98,11 @@ export class ParserEngine {
 	 * @returns {string}
 	 */
 	private readProjectName(): string {
-		var projectName: string = null;
-		var filename = path.resolve(this.projectPath, "package.json");
+		let projectName: string = null;
+		let filename = path.resolve(this.projectPath, "package.json");
 
 		if (fs.existsSync(filename)) {
-			var json = require(filename);
+			let json = require(filename);
 			projectName = json.name;
 		}
 
@@ -132,7 +131,6 @@ export class ParserEngine {
 		}
 
 		this.appRoot = path.resolve(this.projectPath, this.projectOptions.baseUrl);
-		this.appRoot = path.resolve(this.appRoot, this.projectOptions.outDir);
 		this.distRoot = path.resolve(this.projectPath, this.projectOptions.outDir);
 
 		let fileList = new Array<string>();

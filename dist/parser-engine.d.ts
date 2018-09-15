@@ -4,7 +4,6 @@ export declare class ParserEngine {
     nrFilesProcessed: number;
     nrPathsProcessed: number;
     appRoot: string;
-    workingDir: string;
     distRoot: string;
     compactMode: boolean;
     projectOptions: ProjectOptions;

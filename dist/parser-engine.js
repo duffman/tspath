@@ -78,10 +78,10 @@ class ParserEngine {
      * @returns {string}
      */
     readProjectName() {
-        var projectName = null;
-        var filename = path.resolve(this.projectPath, "package.json");
+        let projectName = null;
+        let filename = path.resolve(this.projectPath, "package.json");
         if (fs.existsSync(filename)) {
-            var json = require(filename);
+            let json = require(filename);
             projectName = json.name;
         }
         return projectName;
@@ -105,7 +105,6 @@ class ParserEngine {
             log(chalk.yellow.bold("Parsing project at: ") + '"' + this.projectPath + '"');
         }
         this.appRoot = path.resolve(this.projectPath, this.projectOptions.baseUrl);
-        this.appRoot = path.resolve(this.appRoot, this.projectOptions.outDir);
         this.distRoot = path.resolve(this.projectPath, this.projectOptions.outDir);
         let fileList = new Array();
         this.walkSync(this.distRoot, fileList, ".js");

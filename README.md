@@ -1,6 +1,5 @@
 # TSPath
 #### TypeScript Path Alias Resolver
-##### Now with REACT Support!
 
 ***
 

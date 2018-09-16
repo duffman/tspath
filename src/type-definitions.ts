@@ -30,11 +30,11 @@ export interface ISettings {
 }
 
 export interface ITSConfig {
-	outDir: string,
-	baseUrl: string,
-	paths: IPaths,
+	outDir: string;
+	baseUrl: string;
+	paths: IPaths;
 }
 
 export interface IPaths {
-	[index: string]: Array<string>
+	[index: string]: Array<string>;
 }

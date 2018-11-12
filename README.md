@@ -71,3 +71,15 @@ Yes, that´s it, really!
 
 
 Say bye bye to the relative path hell!
+
+Detailed usage:
+
+```bash
+$ tspath -h
+Options:
+  --version        Show version number                                 [boolean]
+  --force, -f      force processing                             [default: false]
+  --preserve       preserve blanks                              [default: false]
+  --ext, --filter  parsing file extension separated with comma   [default: "js"]
+  -h, --help       Show help                                           [boolean]
+```

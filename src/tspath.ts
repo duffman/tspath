@@ -24,13 +24,28 @@
 
  =----------------------------------------------------------------= */
 
-const pkg      = require('../package.json');
+const pkg      = require("../package.json");
 let fs         = require("fs");
 let path       = require("path");
 let chalk      = require("chalk");
 let log        = console.log;
 let Confirm    = require('prompt-confirm');
-let yargs      = require("yargs").argv;
+let yargs      = require("yargs")
+	.alias("h", "help")
+	.option("force", {
+		alias: "f",
+		default: false,
+		description: "force processing"
+	})
+	.option("preserve", {
+		default: false,
+		description: "preserve blanks"
+	})
+	.option("ext", {
+		alias: "filter",
+		default: "js",
+		description: "parsing file extension separated with comma"
+	}).argv;
 
 import { ParserEngine }     from "./parser-engine";
 import { ParentFileFinder } from "./parent-file-finder";

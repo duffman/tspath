@@ -12,7 +12,7 @@ let yargs = require("yargs")
     .option("force", {
     alias: "f",
     default: false,
-    description: "force processing"
+    description: "skip confirmation checking"
 })
     .option("preserve", {
     default: false,

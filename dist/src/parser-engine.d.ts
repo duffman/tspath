@@ -4,17 +4,28 @@ export declare class ParserEngine {
     nrFilesProcessed: number;
     nrPathsProcessed: number;
     appRoot: string;
+    distRoot: string;
+    compactMode: boolean;
     projectOptions: ProjectOptions;
     tsConfig: any;
+    fileFilter: Array<string>;
     constructor();
     exit(code?: number): void;
     setProjectPath(projectPath: string): boolean;
-    private validateProjectPath(projectPath);
+    /**
+     * Set the accepted file extensions, ensure leading . (dot)
+     * @param {Array<string>} filter
+     */
+    setFileFilter(filter: Array<string>): void;
+    private validateProjectPath;
     /**
      * Attempts to read the name property form package.json
      * @returns {string}
      */
-    private readProjectName();
+    private readProjectName;
+    /**
+     * Parse project and resolve paths
+     */
     execute(): void;
     /**
      *
@@ -22,7 +33,7 @@ export declare class ParserEngine {
      * @param jsRequire - require in javascript source "require("jsRequire")
      * @returns {string}
      */
-    getRelativePathForRequiredFile(sourceFilename: string, jsRequire: string): any;
+    getRelativePathForRequiredFile(sourceFilename: string, jsRequire: string): string;
     /**
      * Processes the filename specified in require("filename")
      * @param node
@@ -53,6 +64,12 @@ export declare class ParserEngine {
      * @param func
      */
     traverseSynTree(ast: any, scope: any, func: any): void;
+    /**
+     * Match a given file extension with the configured extensions
+     * @param {string} fileExtension - ".xxx" or "xxx
+     * @returns {boolean}
+     */
+    private matchExtension;
     /**
      * Recursively walking a directory structure and collect files
      * @param dir

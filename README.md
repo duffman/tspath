@@ -46,7 +46,7 @@ as you can see, the readability have improved significantly!
 
 ```typescript
  import { IgniterApplication } from "@App/IgniterApplication";
- import { CrcCalculator }      from "@Utilils/FileUtilities";
+ import { CrcCalculator }      from "@Utils/FileUtilities";
  import { IMessageHandler }    from "@Messaging/IMessageHandler";
  import { IMessageHub }        from "@Messaging/Hub/IMessageHub";
  import { CronTabHelper }      from "@Utils/CronTabHelper";

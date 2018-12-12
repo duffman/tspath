@@ -99,14 +99,17 @@ class ParserEngine {
         this.appRoot = path.resolve(this.projectPath, this.projectOptions.outDir);
         let fileList = new Array();
         this.walkSync(this.appRoot, fileList, ".js");
-        for (var i = 0; i < fileList.length; i++) {
-            let filename = fileList[i];
-            this.processFile(filename);
-        }
+        for (var i = 0; i < fileList.length; i++)
+            if (!this.shouldSkipFile(fileList[i]))
+                this.processFile(fileList[i]);
         log(chalk.bold("Total files processed:"), this.nrFilesProcessed);
         log(chalk.bold("Total paths processed:"), this.nrPathsProcessed);
         console.timeEnd(PROCESS_TIME);
         log(chalk.bold.green("Project is prepared, now run it normally!"));
+    }
+    shouldSkipFile(filename) {
+        const contents = fs.readFileSync(path.join(this.appRoot, filename), 'utf8');
+        return contents.includes('tspath:skip-file');
     }
     /**
      *

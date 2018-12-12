@@ -141,7 +141,7 @@ export class ParserEngine {
     }
 
     private shouldSkipFile(filename: string): boolean {
-        const contents = fs.readFileSync(path.join(this.appRoot, filename), 'utf8') as string;
+        const contents = fs.readFileSync(filename, 'utf8') as string;
         return contents.includes('tspath:skip-file');
     }
 

@@ -108,7 +108,7 @@ class ParserEngine {
         log(chalk.bold.green("Project is prepared, now run it normally!"));
     }
     shouldSkipFile(filename) {
-        const contents = fs.readFileSync(path.join(this.appRoot, filename), 'utf8');
+        const contents = fs.readFileSync(filename, 'utf8');
         return contents.includes('tspath:skip-file');
     }
     /**

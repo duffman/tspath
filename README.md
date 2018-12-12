@@ -75,8 +75,13 @@ Say bye bye to the relative path hell!
 
 #### Options
 
-
 | Arg | Type | Description | Default |
 |--------|------|-------------|---------|
 | `-f` | `boolean` | `optional` - skip the confirmation prompt displayed before `tspath` parses the project (e.g. `tspath -f`) | `false` |
 | `-c` | `boolean` | `optional` - do not include superfluous whitespace characters and line terminators (e.g. `tspath -c`) | `false` |
+
+#### Skipping files
+
+To skip any file in your project, include the following comment anywhere in the file to skip:
+
+    // tspath:skip-file

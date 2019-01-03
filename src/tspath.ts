@@ -44,7 +44,7 @@ export class TSPath {
 		log(chalk.yellow("TSPath " + pkg.version));
 		let args = process.argv.slice(2);
 		let param = args[0];
-		let filter = ["js"];
+		let filter = ["js", "jsx"];
 		let force: boolean = (yargs.force || yargs.f);
 		let projectPath = process.cwd();
 		let compactOutput = yargs.preserve ? false : true;

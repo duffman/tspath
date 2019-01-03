@@ -290,10 +290,10 @@ class ParserEngine {
                 filelist = this.walkSync(path.join(dir, file), filelist, fileExtension);
             }
             else {
-                let tmpExt = path.extname(file);
-                if ((fileExtension.length > 0 && scope.matchExtension(fileExtension))
-                    || (fileExtension.length < 1)
-                    || (fileExtension == "*.*")) {
+                let fileExt = path.extname(file);
+                if ((fileExt.length > 0 && scope.matchExtension(fileExt))
+                    || (fileExt.length < 1)
+                    || (fileExt == "*.*")) {
                     let fullFilename = path.join(dir, file);
                     filelist.push(fullFilename);
                 }

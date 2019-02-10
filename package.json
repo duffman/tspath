@@ -9,7 +9,7 @@
   },
   "preferGlobal": true,
   "bin": {
-    "tspath": "./dist/src/tspath.js"
+    "tspath": "./dist/tspath.js"
   },
   "keywords": [
     "relative",

@@ -35,10 +35,11 @@ const type_definitions_1 = require("./type-definitions");
 const type_definitions_2 = require("./type-definitions");
 const log = console.log;
 class ParserEngine {
-    constructor() {
+    constructor(opts) {
         this.nrFilesProcessed = 0;
         this.nrPathsProcessed = 0;
         this.compactMode = true;
+        this.baseUrl = opts.baseUrl || null;
     }
     exit(code = 5) {
         console.log("Terminating...");
@@ -227,7 +228,7 @@ class ParserEngine {
         this.tsConfig = JSON.parse(fileData);
         let compilerOpt = this.tsConfig.compilerOptions;
         let reqFields = [];
-        reqFields["baseUrl"] = compilerOpt.baseUrl;
+        reqFields["baseUrl"] = this.baseUrl || compilerOpt.baseUrl;
         reqFields["outDir"] = compilerOpt.outDir;
         for (let key in reqFields) {
             let field = reqFields[key];

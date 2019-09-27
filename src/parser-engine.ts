@@ -22,349 +22,348 @@
 
 =----------------------------------------------------------------= */
 
-let fs             = require("fs");
-let path           = require('path');
-let esprima        = require("esprima");
-let escodegen      = require("escodegen");
-let chalk          = require("chalk");
+let fs = require('fs');
+let path = require('path');
+let esprima = require('esprima');
+let escodegen = require('escodegen');
+let chalk = require('chalk');
 
-import { Utils }                from "./utils";
-import { JsonCommentStripper }  from "./json-comment-stripper";
-import { ProjectOptions }       from "./project-options";
-import { TS_CONFIG }            from "./type-definitions";
-import { FILE_ENCODING }        from "./type-definitions";
+import { Utils } from './utils';
+import { JsonCommentStripper } from './json-comment-stripper';
+import { ProjectOptions } from './project-options';
+import { FILE_ENCODING, TS_CONFIG } from './type-definitions';
 
-const log          = console.log;
+const log = console.log;
 
 export class ParserEngine {
-	public projectPath: string;
+    public projectPath: string;
 
-	nrFilesProcessed : number = 0;
-	nrPathsProcessed : number = 0;
-	appRoot          : string;
-	distRoot         : string;
-	compactMode      : boolean = true;
-	projectOptions   : ProjectOptions;
-	tsConfig         : any;
-	fileFilter       : Array<string>;
+    nrFilesProcessed: number = 0;
+    nrPathsProcessed: number = 0;
+    appRoot: string;
+    distRoot: string;
+    compactMode: boolean = true;
+    projectOptions: ProjectOptions;
+    tsConfig: any;
+    fileFilter: Array<string>;
 
-	constructor() {}
+    constructor() {
+    }
 
-	public exit(code: number = 5) {
-		console.log("Terminating...");
-		process.exit(code);
-	}
+    public exit(code: number = 5) {
+        console.log('Terminating...');
+        process.exit(code);
+    }
 
-	public setProjectPath(projectPath: string): boolean {
-		if (!Utils.isEmpty(projectPath) && !this.validateProjectPath(projectPath)) {
-			log(chalk.red.bold("Project Path \"" + chalk.underline(projectPath) + "\" is invalid!"));
-			return false;
-		}
+    public setProjectPath(projectPath: string): boolean {
+        if (!Utils.isEmpty(projectPath) && !this.validateProjectPath(projectPath)) {
+            log(chalk.red.bold('Project Path "' + chalk.underline(projectPath) + '" is invalid!'));
+            return false;
+        }
 
-		this.projectPath = projectPath;
+        this.projectPath = projectPath;
 
-		return true;
-	}
+        return true;
+    }
 
-	/**
-	 * Set the accepted file extensions, ensure leading . (dot)
-	 * @param {Array<string>} filter
-	 */
-	public setFileFilter(filter: Array<string>) {
-		this.fileFilter = filter.map((e) => {
-			return !e.startsWith(".") ? "." + e : e;
-		});
-	}
+    /**
+     * Set the accepted file extensions, ensure leading . (dot)
+     * @param {Array<string>} filter
+     */
+    public setFileFilter(filter: Array<string>) {
+        this.fileFilter = filter.map((e) => {
+            return !e.startsWith('.') ? '.' + e : e;
+        });
+    }
 
-	private validateProjectPath(projectPath: string): boolean {
-		let result = true;
+    /**
+     * Parse project and resolve paths
+     */
+    public execute() {
+        const PROCESS_TIME = 'Operation finished in';
+        console.time(PROCESS_TIME);
 
-		let configFile = Utils.ensureTrailingPathDelimiter(projectPath);
-		configFile += TS_CONFIG;
+        if (!this.validateProjectPath(this.projectPath)) {
+            log(chalk.bold.red('Invalid project path'));
+            this.exit(10);
+        }
 
-		if (!fs.existsSync(projectPath)) {
-			result = false;
-		}
+        this.projectOptions = this.readConfig();
+        let projectName = this.readProjectName();
 
-		if (!fs.existsSync(configFile)) {
-			log("TypeScript Compiler Configuration file " + chalk.underline.bold(TS_CONFIG) + " is missing!");
-		}
+        if (!Utils.isEmpty(projectName)) {
+            log(chalk.yellow('Parsing project: ') + chalk.bold(projectName) + ' ' + chalk.underline(this.projectPath));
+        } else {
+            log(chalk.yellow.bold('Parsing project at: ') + '"' + this.projectPath + '"');
+        }
 
-		return result;
-	}
+        this.appRoot = path.resolve(this.projectPath, this.projectOptions.baseUrl);
+        this.distRoot = path.resolve(this.projectPath, this.projectOptions.outDir);
 
-	/**
-	 * Attempts to read the name property form package.json
-	 * @returns {string}
-	 */
-	private readProjectName(): string {
-		let projectName: string = null;
-		let filename = path.resolve(this.projectPath, "package.json");
+        let fileList = new Array<string>();
 
-		if (fs.existsSync(filename)) {
-			let json = require(filename);
-			projectName = json.name;
-		}
+        this.walkSync(this.distRoot, fileList, '.js');
 
-		return projectName;
-	}
+        for (let i = 0; i < fileList.length; i++) {
+            let filename = fileList[i];
+            this.processFile(filename);
+        }
 
-	/**
-	 * Parse project and resolve paths
-	 */
-	public execute() {
-		const  PROCESS_TIME = "Operation finished in";
-		console.time(PROCESS_TIME);
+        log(chalk.bold('Total files processed:'), this.nrFilesProcessed);
+        log(chalk.bold('Total paths processed:'), this.nrPathsProcessed);
 
-		if (!this.validateProjectPath(this.projectPath)) {
-			log(chalk.bold.red("Invalid project path"));
-			this.exit(10);
-		}
+        console.timeEnd(PROCESS_TIME);
+        log(chalk.bold.green('Project is prepared, now run it normally!'));
+    }
 
-		this.projectOptions = this.readConfig();
-		let projectName = this.readProjectName();
+    /**
+     *
+     * @param sourceFilename
+     * @param jsRequire - require in javascript source "require("jsRequire")
+     * @returns {string}
+     */
+    getRelativePathForRequiredFile(sourceFilename: string, jsRequire: string) {
+        let options = this.projectOptions;
 
-		if (!Utils.isEmpty(projectName)) {
-			log(chalk.yellow("Parsing project: ") + chalk.bold(projectName) + " " + chalk.underline(this.projectPath));
-		} else {
-			log(chalk.yellow.bold("Parsing project at: ") + '"' +  this.projectPath + '"');
-		}
+        for (let alias in options.pathMappings) {
+            let mapping = options.pathMappings[alias];
 
-		this.appRoot = path.resolve(this.projectPath, this.projectOptions.baseUrl);
-		this.distRoot = path.resolve(this.projectPath, this.projectOptions.outDir);
+            //TODO: Handle * properly
+            alias = Utils.stripWildcard(alias);
+            mapping = Utils.stripWildcard(mapping);
 
-		let fileList = new Array<string>();
+            // 2018-06-02: Workaround for bug with same prefix Aliases e.g @db and @dbCore
+            // Cut alias prefix for mapping comparison
+            let requirePrefix = jsRequire.substring(0, jsRequire.indexOf(path.sep));
 
-		this.walkSync(this.distRoot, fileList, ".js");
+            if (requirePrefix == alias) {
+                let result = jsRequire.replace(alias, mapping);
+                Utils.replaceDoubleSlashes(result);
+                result = Utils.ensureTrailingPathDelimiter(result);
 
-		for (let i = 0; i < fileList.length; i++) {
-			let filename = fileList[i];
-			this.processFile(filename);
-		}
+                let absoluteJsRequire = path.join(this.distRoot, result);
+                let sourceDir = path.dirname(sourceFilename);
 
-		log(chalk.bold("Total files processed:"), this.nrFilesProcessed);
-		log(chalk.bold("Total paths processed:"), this.nrPathsProcessed);
+                let relativePath = path.relative(sourceDir, absoluteJsRequire);
 
-		console.timeEnd(PROCESS_TIME);
-		log(chalk.bold.green("Project is prepared, now run it normally!"));
-	}
+                /* If the path does not start with .. it´ not a sub directory
+                 * as in ../ or ..\ so assume it´ the same dir...
+                 */
+                if (relativePath[0] != '.') {
+                    relativePath = './' + relativePath;
+                }
 
-	/**
-	 *
- 	 * @param sourceFilename
-	 * @param jsRequire - require in javascript source "require("jsRequire")
-	 * @returns {string}
-	 */
-	getRelativePathForRequiredFile(sourceFilename: string, jsRequire: string) {
-		let options = this.projectOptions;
+                jsRequire = relativePath;
+                break;
+            }
+        }
 
-		for (let alias in options.pathMappings) {
-			let mapping = options.pathMappings[alias];
+        return jsRequire;
+    }
 
-			//TODO: Handle * properly
-			alias = Utils.stripWildcard(alias);
-			mapping = Utils.stripWildcard(mapping);
+    /**
+     * Processes the filename specified in require("filename")
+     * @param node
+     * @param sourceFilename
+     * @returns {any}
+     */
+    processJsRequire(node: any, sourceFilename: string): any {
+        let resultNode = node;
+        let requireInJsFile = Utils.safeGetAstNodeValue(node);
 
-			// 2018-06-02: Workaround for bug with same prefix Aliases e.g @db and @dbCore
-			// Cut alias prefix for mapping comparison
-			let requirePrefix = jsRequire.substring(0, jsRequire.indexOf(path.sep))
+        /* Only proceed if the "require" contains a full file path, not
+         * single references like "inversify"
+         */
+        if (!Utils.isEmpty(requireInJsFile) && Utils.fileHavePath(requireInJsFile)) {
+            let relativePath = this.getRelativePathForRequiredFile(sourceFilename, requireInJsFile);
+            resultNode = {type: 'Literal', value: relativePath, raw: relativePath};
 
-			if (requirePrefix == alias) {
-				let result = jsRequire.replace(alias, mapping);
-				Utils.replaceDoubleSlashes(result);
-				result = Utils.ensureTrailingPathDelimiter(result);
+            this.nrPathsProcessed++;
+        }
 
-				let absoluteJsRequire = path.join(this.distRoot, result);
-				let sourceDir = path.dirname(sourceFilename);
+        return resultNode;
+    }
 
-				let relativePath = path.relative(sourceDir, absoluteJsRequire);
+    /**
+     * Extracts all the requires from a single file and processes the paths
+     * @param filename
+     */
+    processFile(filename: string) {
+        this.nrFilesProcessed++;
 
-				/* If the path does not start with .. it´ not a sub directory
-				 * as in ../ or ..\ so assume it´ the same dir...
-				 */
-				if (relativePath[0] != ".") {
-					relativePath = "./" + relativePath;
-				}
+        let scope = this;
+        let inputSourceCode = fs.readFileSync(filename, FILE_ENCODING);
+        let ast = null;
 
-				jsRequire = relativePath;
-				break;
-			}
-		}
+        try {
+            ast = esprima.parse(inputSourceCode); //, { raw: true, tokens: true, range: true, comment: true });
+        } catch (error) {
+            console.log('Unable to parse file:', filename);
+            console.log('Error:', error);
+            this.exit();
+        }
 
-		return jsRequire;
-	}
+        this.traverseSynTree(ast, this, function(node) {
+            if (node != undefined && node.type == 'CallExpression' && node.callee.name == 'require') {
+                node.arguments[0] = scope.processJsRequire(node.arguments[0], filename);
+            }
+        });
 
-	/**
-	 * Processes the filename specified in require("filename")
-	 * @param node
-	 * @param sourceFilename
-	 * @returns {any}
-	 */
-	processJsRequire(node: any, sourceFilename: string): any {
-		let resultNode = node;
-		let requireInJsFile = Utils.safeGetAstNodeValue(node);
+        let option = {comment: true, format: {compact: this.compactMode, quotes: '"'}};
+        let finalSource = escodegen.generate(ast, option);
 
-		/* Only proceed if the "require" contains a full file path, not
-		 * single references like "inversify"
-		 */
-		if (!Utils.isEmpty(requireInJsFile) && Utils.fileHavePath(requireInJsFile)) {
-			let relativePath = this.getRelativePathForRequiredFile(sourceFilename, requireInJsFile);
-			resultNode = {type: "Literal", value: relativePath, raw: relativePath};
+        try {
+            this.saveFileContents(filename, finalSource);
+        } catch (error) {
+            log(chalk.bold.red('Unable to write file:'), filename);
+            this.exit();
+        }
+    }
 
-			this.nrPathsProcessed++;
-		}
+    /**
+     * Saves file contents to disk
+     * @param filename
+     * @param fileContents
+     */
+    saveFileContents(filename: string, fileContents: string) {
+        let error: any = false;
+        fs.writeFileSync(filename, fileContents, FILE_ENCODING, error);
 
-		return resultNode;
-	}
+        if (error) {
+            throw Error('Could not save file: ' + filename);
+        }
+    }
 
-	/**
-	 * Extracts all the requires from a single file and processes the paths
-	 * @param filename
-	 */
-	processFile(filename: string) {
-		this.nrFilesProcessed++;
+    /**
+     * Read and parse the TypeScript configuration file
+     * @param configFilename
+     */
+    readConfig(configFilename: string = TS_CONFIG): ProjectOptions {
+        let fileName = path.resolve(this.projectPath, configFilename);
+        let fileData = fs.readFileSync(path.resolve(this.projectPath, fileName), FILE_ENCODING);
 
-		let scope = this;
-		let inputSourceCode = fs.readFileSync(filename, FILE_ENCODING);
-		let ast = null;
+        let jsonCS = new JsonCommentStripper();
+        fileData = jsonCS.stripComments(fileData);
 
-		try {
-			ast = esprima.parse(inputSourceCode); //, { raw: true, tokens: true, range: true, comment: true });
-		}
-		catch(error) {
-			console.log("Unable to parse file:", filename);
-			console.log("Error:", error);
-			this.exit();
-		}
+        this.tsConfig = JSON.parse(fileData);
 
-		this.traverseSynTree(ast, this, function(node) {
-			if (node != undefined && node.type == "CallExpression" && node.callee.name == "require") {
-				node.arguments[0] = scope.processJsRequire(node.arguments[0], filename);
-			}
-		});
+        let compilerOpt = this.tsConfig.compilerOptions;
 
-		let option = { comment: true, format: { compact: this.compactMode,  quotes: '"' }};
-		let finalSource = escodegen.generate(ast, option);
+        let reqFields = [];
+        reqFields['baseUrl'] = compilerOpt.baseUrl;
+        reqFields['outDir'] = compilerOpt.outDir;
 
-		try {
-			this.saveFileContents(filename, finalSource);
-		}
-		catch(error) {
-			log(chalk.bold.red("Unable to write file:"), filename);
-			this.exit();
-		}
-	}
+        for (let key in reqFields) {
+            let field = reqFields[key];
+            if (Utils.isEmpty(field)) {
+                log(chalk.red.bold('Missing required field:') + ' "' + chalk.bold.underline(key) + '"');
+                this.exit(22);
+            }
+        }
 
-	/**
-	 * Saves file contents to disk
-	 * @param filename
-	 * @param fileContents
-	 */
-	saveFileContents(filename: string, fileContents: string) {
-		let error: any = false;
-		fs.writeFileSync(filename, fileContents, FILE_ENCODING, error);
+        return new ProjectOptions(compilerOpt);
+    }
 
-		if (error) {
-			throw Error("Could not save file: " +  filename);
-		}
-	}
+    /**
+     *
+     * @param ast
+     * @param scope
+     * @param func
+     */
+    traverseSynTree(ast, scope, func) {
+        func(ast);
+        for (let key in ast) {
+            if (ast.hasOwnProperty(key)) {
+                let child = ast[key];
 
-	/**
-	 * Read and parse the TypeScript configuration file
-	 * @param configFilename
-	 */
-	readConfig(configFilename: string = TS_CONFIG): ProjectOptions {
-		let fileName = path.resolve(this.projectPath, configFilename);
-		let fileData = fs.readFileSync(path.resolve(this.projectPath, fileName), FILE_ENCODING);
+                if (typeof child === 'object' && child !== null) {
+                    if (Array.isArray(child)) {
+                        child.forEach(function(ast) { //5
+                            scope.traverseSynTree(ast, scope, func);
+                        });
+                    } else {
+                        scope.traverseSynTree(child, scope, func);
+                    }
+                }
+            }
+        }
+    }
 
-		let jsonCS = new JsonCommentStripper();
-		fileData = jsonCS.stripComments(fileData);
+    /**
+     * Recursively walking a directory structure and collect files
+     * @param dir
+     * @param filelist
+     * @param fileExtension
+     * @returns {Array<string>}
+     */
+    public walkSync(dir: string, filelist: Array<string>, fileExtension?: string) {
+        let scope = this;
+        let files = fs.readdirSync(dir);
+        filelist = filelist || [];
+        fileExtension = fileExtension === undefined ? '' : fileExtension;
 
-		this.tsConfig = JSON.parse(fileData);
+        for (let i = 0; i < files.length; i++) {
+            let file = files[i];
 
-		let compilerOpt = this.tsConfig.compilerOptions;
+            if (fs.statSync(path.join(dir, file)).isDirectory()) {
+                filelist = this.walkSync(path.join(dir, file), filelist, fileExtension);
+            } else {
+                let tmpExt = path.extname(file);
 
-		let reqFields = [];
-		reqFields["baseUrl"] = compilerOpt.baseUrl;
-		reqFields["outDir"] = compilerOpt.outDir;
+                if ((fileExtension.length > 0 && scope.matchExtension(fileExtension))
+                    || (fileExtension.length < 1)
+                    || (fileExtension == '*.*')) {
+                    let fullFilename = path.join(dir, file);
+                    filelist.push(fullFilename);
+                }
+            }
+        }
 
-		for (let key in reqFields) {
-			let field = reqFields[key];
-			if (Utils.isEmpty(field)) {
-				log(chalk.red.bold("Missing required field:") + ' "' + chalk.bold.underline(key) + '"');
-				this.exit(22);
-			}
-		}
+        return filelist;
+    }
 
-		return new ProjectOptions(compilerOpt);
-	}
+    private validateProjectPath(projectPath: string): boolean {
+        let result = true;
 
-	/**
-	 *
-	 * @param ast
-	 * @param scope
-	 * @param func
-	 */
-	traverseSynTree(ast, scope, func) {
-		func(ast);
-		for (let key in ast) {
-			if (ast.hasOwnProperty(key)) {
-				let child = ast[key];
+        let configFile = Utils.ensureTrailingPathDelimiter(projectPath);
+        configFile += TS_CONFIG;
 
-				if (typeof child === 'object' && child !== null) {
-					if (Array.isArray(child)) {
-						child.forEach(function(ast) { //5
-							scope.traverseSynTree(ast, scope, func);
-						});
-					} else {
-						scope.traverseSynTree(child, scope, func);
-					}
-				}
-			}
-		}
-	}
+        if (!fs.existsSync(projectPath)) {
+            result = false;
+        }
 
-	/**
-	 * Match a given file extension with the configured extensions
-	 * @param {string} fileExtension - ".xxx" or "xxx
-	 * @returns {boolean}
-	 */
-	private matchExtension(fileExtension: string): boolean {
-		if (Utils.isEmpty(fileExtension) || this.fileFilter.length == 0) return false;
-		return this.fileFilter.indexOf(fileExtension) > -1;
-	}
+        if (!fs.existsSync(configFile)) {
+            log('TypeScript Compiler Configuration file ' + chalk.underline.bold(TS_CONFIG) + ' is missing!');
+        }
 
-	/**
-	 * Recursively walking a directory structure and collect files
-	 * @param dir
-	 * @param filelist
-	 * @param fileExtension
-	 * @returns {Array<string>}
-	 */
-	public walkSync(dir: string, filelist: Array<string>, fileExtension?: string) {
-		let scope = this;
-		let	files = fs.readdirSync(dir);
-		filelist = filelist || [];
-		fileExtension = fileExtension === undefined ? "" : fileExtension;
+        return result;
+    }
 
-		for (let i = 0; i < files.length; i++) {
-			let file = files[i];
+    /**
+     * Attempts to read the name property form package.json
+     * @returns {string}
+     */
+    private readProjectName(): string {
+        let projectName: string = null;
+        let filename = path.resolve(this.projectPath, 'package.json');
 
-			if (fs.statSync(path.join(dir, file)).isDirectory()) {
-				filelist = this.walkSync(path.join(dir, file), filelist, fileExtension);
-			}
-			else {
-				let tmpExt = path.extname(file);
+        if (fs.existsSync(filename)) {
+            let json = require(filename);
+            projectName = json.name;
+        }
 
-				if ((fileExtension.length > 0 && scope.matchExtension(fileExtension))
-					|| (fileExtension.length < 1)
-					|| (fileExtension == "*.*")) {
-					let fullFilename = path.join(dir, file);
-					filelist.push(fullFilename);
-				}
-			}
-		}
+        return projectName;
+    }
 
-		return filelist;
-	}
+    /**
+     * Match a given file extension with the configured extensions
+     * @param {string} fileExtension - ".xxx" or "xxx
+     * @returns {boolean}
+     */
+    private matchExtension(fileExtension: string): boolean {
+        if (Utils.isEmpty(fileExtension) || this.fileFilter.length == 0) {
+            return false;
+        }
+        return this.fileFilter.indexOf(fileExtension) > -1;
+    }
 }

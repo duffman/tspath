@@ -39,105 +39,105 @@
 =---------------------------------------------------------------= */
 
 enum JsonParserState {
-	None,
-	InLineComment,
-	InBlockComment,
-	InObject,
-	InQuote
+    None,
+    InLineComment,
+    InBlockComment,
+    InObject,
+    InQuote
 }
 
 export class JsonCommentStripper {
-	private currState = JsonParserState.None;
-	private prevtState = JsonParserState.None;
+    private currState = JsonParserState.None;
+    private prevtState = JsonParserState.None;
 
-	constructor() {}
+    constructor() {
+    }
 
-	public stripComments(data: string) {
-		return this.parse(data);
-	}
+    public stripComments(data: string) {
+        return this.parse(data);
+    }
 
-	private isQuote (char: string): boolean {
-		return (char == "\"" || char == "'");
-	}
+    parse(data: string): string {
+        var lineNum = 1;
+        var linePos = 1;
 
-	private setState(state: JsonParserState) {
-		if (state != this.currState) {
-			this.prevtState = this.currState;
-			this.currState = state;
-		}
-	}
+        var prevChar = '';
+        var currChar = '';
+        var aheadChar = '';
 
-	private inState(state: JsonParserState) {
-		return this.currState == state;
-	}
+        var chunk = '';
 
-	private setPrevState () {
-		this.setState(this.prevtState);
-	}
+        for (var i = 0; i < data.length; i++) {
+            prevChar = currChar;
+            currChar = data[i];
+            aheadChar = data[i + 1];
 
-	private inComment(): boolean {
-		return this.inState(JsonParserState.InLineComment)
-			|| this.inState(JsonParserState.InBlockComment);
-	}
+            linePos++;
 
-	parse(data: string): string {
-		var lineNum = 1;
-		var linePos = 1;
+            if (currChar == '\n') {
+                if (this.inState(JsonParserState.InLineComment)) {
+                    this.setState(JsonParserState.None);
+                }
 
-		var prevChar = "";
-		var currChar = "";
-		var aheadChar = "";
+                linePos = 1;
+                lineNum++;
+            }
 
-		var chunk = "";
+            // Allow block comments everywhere except in quotes
+            if (currChar == '/' && aheadChar == '*' && !this.inState(JsonParserState.InQuote)) {
+                i++;
+                this.setState(JsonParserState.InBlockComment);
+                continue;
+            }
 
-		for (var i = 0; i < data.length; i++) {
-			prevChar = currChar;
-			currChar = data[i];
-			aheadChar = data[i + 1];
+            if (currChar == '/' && aheadChar == '/' && this.inState(JsonParserState.None)) {
+                i++;
+                this.setState(JsonParserState.InLineComment);
+                continue;
+            }
 
-			linePos++;
+            // If this is an end block comment, return to the previous state
+            if (currChar == '*' && aheadChar == '/' && this.inState(JsonParserState.InBlockComment)) {
+                i++;
+                this.setPrevState();
+                continue;
+            }
 
-			if (currChar == "\n") {
-				if (this.inState(JsonParserState.InLineComment)) {
-					this.setState(JsonParserState.None);
-				}
+            if (this.isQuote(currChar) && this.inState(JsonParserState.None)) {
+                this.setState(JsonParserState.InQuote);
+            } else if (this.isQuote(currChar) && this.inState(JsonParserState.InQuote)) {
+                this.setState(JsonParserState.None);
+            }
 
-				linePos = 1;
-				lineNum++;
-			}
+            if (!this.inComment()) {
+                chunk += currChar;
+            }
+        }
 
-			// Allow block comments everywhere except in quotes
-			if (currChar == "/" && aheadChar == "*" && !this.inState(JsonParserState.InQuote)) {
-				i++;
-				this.setState(JsonParserState.InBlockComment);
-				continue;
-			}
+        return chunk;
+    }
 
-			if (currChar == "/" && aheadChar == "/" && this.inState(JsonParserState.None)) {
-				i++;
-				this.setState(JsonParserState.InLineComment);
-				continue;
-			}
+    private isQuote(char: string): boolean {
+        return (char == '"' || char == '\'');
+    }
 
-			// If this is an end block comment, return to the previous state
-			if (currChar == "*" && aheadChar == "/" && this.inState(JsonParserState.InBlockComment)) {
-				i++;
-				this.setPrevState();
-				continue;
-			}
+    private setState(state: JsonParserState) {
+        if (state != this.currState) {
+            this.prevtState = this.currState;
+            this.currState = state;
+        }
+    }
 
-			if (this.isQuote(currChar) && this.inState(JsonParserState.None)) {
-				this.setState(JsonParserState.InQuote);
-			}
+    private inState(state: JsonParserState) {
+        return this.currState == state;
+    }
 
-			else if (this.isQuote(currChar) && this.inState(JsonParserState.InQuote)) {
-				this.setState(JsonParserState.None);
-			}
+    private setPrevState() {
+        this.setState(this.prevtState);
+    }
 
-			if (!this.inComment())
-				chunk += currChar;
-		}
-
-		return chunk;
-	}
+    private inComment(): boolean {
+        return this.inState(JsonParserState.InLineComment)
+            || this.inState(JsonParserState.InBlockComment);
+    }
 }

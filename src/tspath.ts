@@ -24,70 +24,67 @@
 
  =----------------------------------------------------------------= */
 
-const pkg      = require('../package.json');
-let fs         = require("fs");
-let path       = require("path");
-let chalk      = require("chalk");
-let log        = console.log;
-let Confirm    = require('prompt-confirm');
-let yargs      = require("yargs").argv;
 
-import { ParserEngine }     from "./parser-engine";
-import { ParentFileFinder } from "./parent-file-finder";
-import { TS_CONFIG }        from "./type-definitions";
+import Confirm from 'prompt-confirm';
+import { ParserEngine } from './parser-engine';
+import { ParentFileFinder } from './parent-file-finder';
+import { TS_CONFIG } from './type-definitions';
+import chalk from 'chalk';
+import { argv as yargs } from 'yargs';
+import { version } from '../package.json';
 
 
 export class TSPath {
-	private engine = new ParserEngine();
+    private engine = new ParserEngine();
 
-	constructor() {
-		log(chalk.yellow("TSPath " + pkg.version));
-		let args = process.argv.slice(2);
-		let param = args[0];
-		let filter = ["js"];
-		let force: boolean = (yargs.force || yargs.f);
-		let projectPath = process.cwd();
-		let compactOutput = yargs.preserve ? false : true;
-		let findResult = ParentFileFinder.findFile(projectPath, TS_CONFIG);
+    constructor() {
+        console.log(chalk.yellow('TSPath ' + version));
+        let args = process.argv.slice(2);
+        let param = args[0];
+        let filter = ['js'];
+        let force: boolean = (yargs.force || yargs.f);
+        let projectPath = process.cwd();
+        let compactOutput = yargs.preserve ? false : true;
+        let findResult = ParentFileFinder.findFile(projectPath, TS_CONFIG);
 
-		let scope = this;
+        let scope = this;
 
-		if (yargs.ext || yargs.filter) {
-			let argFilter = yargs.ext ? yargs.ext : yargs.filter;
-			filter = argFilter.split(",").map((ext) => {
-				return ext.replace(/\s/g, "");
-			});
-		}
+        if (yargs.ext || yargs.filter) {
+            let argFilter = yargs.ext ? yargs.ext : yargs.filter;
+            filter = argFilter.split(',').map((ext) => {
+                return ext.replace(/\s/g, '');
+            });
+        }
 
-		if (filter.length === 0) {
-			log(chalk.bold.red("File filter missing!"));
-			process.exit(23);
-		}
+        if (filter.length === 0) {
+            console.log(chalk.bold.red('File filter missing!'));
+            process.exit(23);
+        }
 
-		this.engine.compactMode = compactOutput;
-		this.engine.setFileFilter(filter);
+        this.engine.compactMode = compactOutput;
+        this.engine.setFileFilter(filter);
 
-		if (force && findResult.fileFound) {
-			scope.processPath(findResult.path);
+        if (force && findResult.fileFound) {
+            scope.processPath(findResult.path);
+        } else if (findResult.fileFound) {
+            new Confirm('Process project at: <' + findResult.path + '> ?')
+                .ask(function(answer) {
+                    if (true === answer) {
+                        scope.processPath(findResult.path);
+                    }
+                });
+        } else {
+            console.log(chalk.bold('No project root found!'));
+        }
+    }
 
-		} else if (findResult.fileFound) {
-			let confirm = new Confirm("Process project at: <"  + findResult.path +  "> ?")
-				.ask(function(answer) {
-					if (answer) {
-						scope.processPath(findResult.path);
-					}
-				});
+    public execute(args: object): void {
 
-		} else {
-			log(chalk.bold("No project root found!"));
-		}
 	}
 
-	private processPath(projectPath: string) {
-		if (this.engine.setProjectPath(projectPath)) {
-			this.engine.execute();
-		}
-	}
+    private processPath(projectPath: string) {
+        if (this.engine.setProjectPath(projectPath)) {
+            this.engine.execute();
+        }
+    }
 }
-
-let tspath = new TSPath();

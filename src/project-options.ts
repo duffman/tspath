@@ -22,24 +22,24 @@
 
  =----------------------------------------------------------------= */
 
-import { ISettings } from "./type-definitions";
+import { ISettings } from './type-definitions';
 
 export class ProjectOptions {
-	public outDir: string;
-	public baseUrl: string;
-	public pathMappings: ISettings;
+    public outDir: string;
+    public baseUrl: string;
+    public pathMappings: ISettings;
 
-	//TODO: Support fallbacks
-	processMappings(mappings: any) {
-		for (var alias in mappings) {
-			this.pathMappings[alias] = mappings[alias][0]; // No support for fallbacks yet...
-		}
-	}
+    constructor(tsconfigObj: any) {
+        this.pathMappings = {};
+        this.outDir = tsconfigObj.outDir;
+        this.baseUrl = tsconfigObj.baseUrl;
+        this.processMappings(tsconfigObj.paths);
+    }
 
-	constructor(tsconfigObj: any) {
-		this.pathMappings = {};
-		this.outDir = tsconfigObj.outDir;
-		this.baseUrl = tsconfigObj.baseUrl;
-		this.processMappings(tsconfigObj.paths);
-	}
+    //TODO: Support fallbacks
+    processMappings(mappings: any) {
+        for (var alias in mappings) {
+            this.pathMappings[alias] = mappings[alias][0]; // No support for fallbacks yet...
+        }
+    }
 }

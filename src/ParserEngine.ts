@@ -47,7 +47,7 @@ export class ParserEngine {
     private distRoot: string;
     private projectOptions: ProjectOptions;
     private tsConfig: any;
-    private fileFilter: string[];
+    private readonly fileFilter: string;
 
     /**
      * ParserEngine constructor
@@ -62,7 +62,7 @@ export class ParserEngine {
         this.compactMode = compactMode;
         this.fileFilter = filter.map((e) => {
             return !e.startsWith('.') ? '.' + e : e;
-        });
+        }).join(',');
     }
     /**
      * Exit
@@ -76,7 +76,7 @@ export class ParserEngine {
     /**
      * Parse project and resolve paths
      */
-    public execute(configPath: string = '') {
+    public execute(configPath: string = ''): void {
         const PROCESS_TIME = 'Operation finished in';
         console.time(PROCESS_TIME);
 
@@ -99,8 +99,11 @@ export class ParserEngine {
 
         const fileList = new Array<string>();
 
-        this.walkSync(this.distRoot, fileList, '.js');
+        console.log(this);
+        process.exit();
+        this.walkSync(this.distRoot, fileList, this.fileFilter);
 
+        // tslint:disable-next-line:prefer-for-of
         for (let i = 0; i < fileList.length; i++) {
             const filename = fileList[i];
             this.processFile(filename);
@@ -119,14 +122,15 @@ export class ParserEngine {
      * @param jsRequire - require in javascript source "require("jsRequire")
      * @returns {string}
      */
-    public getRelativePathForRequiredFile(sourceFilename: string, jsRequire: string) {
+    public getRelativePathForRequiredFile(sourceFilename: string, jsRequire: string): string {
         const options = this.projectOptions;
 
+        // tslint:disable-next-line:forin
         for (const alias in options.pathMappings) {
             let mapping = options.pathMappings[alias];
 
             // TODO: Handle * properly
-            let strippedAlias = Utils.stripWildcard(alias);
+            const strippedAlias = Utils.stripWildcard(alias);
             mapping = Utils.stripWildcard(mapping);
 
             // 2018-06-02: Workaround for bug with same prefix Aliases e.g @db and @dbCore
@@ -201,7 +205,7 @@ export class ParserEngine {
             this.exit();
         }
 
-        this.traverseSynTree(ast, this, function(node: any) {
+        this.traverseSynTree(ast, this, (node: any) => {
             if (node !== undefined && node.type === 'CallExpression' && node.callee.name === 'require') {
                 node.arguments[0] = scope.processJsRequire(node.arguments[0], filename);
             }
@@ -253,6 +257,7 @@ export class ParserEngine {
             outDir:compilerOpt.outDir,
         };
 
+        // tslint:disable-next-line:forin
         for (const key in reqFields) {
             const field = reqFields[key];
             if (Utils.isEmpty(field)) {
@@ -296,12 +301,13 @@ export class ParserEngine {
      * @param fileExtension
      * @returns {Array<string>}
      */
-    public walkSync(dir: string, fileList: string[], fileExtension?: string) {
+    public walkSync(dir: string, fileList: string[], fileExtension?: string): string[] {
         const scope = this;
         const files = fs.readdirSync(dir);
         fileList = fileList || [];
         fileExtension = fileExtension === undefined ? '' : fileExtension;
 
+        // tslint:disable-next-line:prefer-for-of
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
 

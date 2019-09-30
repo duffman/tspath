@@ -29,7 +29,7 @@ export interface ISettings {
 export interface IArguments {
     f: boolean;
     force: boolean;
-    conf: string | boolean;
+    root: string | boolean;
     preserve: boolean;
     filter: string;
     ext: string;

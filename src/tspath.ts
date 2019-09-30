@@ -59,8 +59,8 @@ export class TSPath {
         let config: ConfigFile;
         try {
             let confPath = projectPath;
-            if (typeof args.conf === 'string' && '' !== args.conf) {
-                confPath = projectPath + '/' + args.conf;
+            if (typeof args.root === 'string' && '' !== args.root) {
+                confPath = projectPath + '/' + args.root;
             }
             config = ConfigFinder.find(confPath);
         } catch($err) {

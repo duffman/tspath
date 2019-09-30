@@ -1,8 +1,7 @@
 {
   "compilerOptions": {
-    "outDir": "from/",
+    "outDir": "src/",
     "baseUrl": "/opt",
-    "toDir": "to/",
     "paths": {
       "@test": ["/converted/to/a/correct/path"],
       "@lib": ["/this/works/well"],

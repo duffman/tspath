@@ -71,3 +71,13 @@ Yes, that´s it, really!
 
 
 Say bye bye to the relative path hell!
+
+
+#### CLI Options
+
+```bash
+- f | force <boolean>:      Always overwrite files in out directory
+- root <string>:            Root directory
+- preserve <boolean>:       If set to true, minifying will not happen
+- filter | ext <string>:    File extension filtering (default .js)
+```

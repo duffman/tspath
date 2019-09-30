@@ -33,21 +33,46 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Utils } from './utils';
-import chalk from 'chalk';
-import { FileFindResult } from './lib/FileFindResult';
+import { ConfigFile } from './lib/ConfigFile';
+import { TSPATH_CONFIG, TS_CONFIG } from './lib/constants';
 
-export class ParentFileFinder {
+/**
+ * Config finder class
+ */
+export class ConfigFinder {
+
+    /**
+     * Find config file
+     * @param startPath
+     * @throws Error When no config file can be found
+     */
+    public static find(startPath: string): ConfigFile {
+        let result: ConfigFile;
+        // tslint:disable-next-line:no-conditional-assignment
+        if(false === (result = this.findFile(startPath, TSPATH_CONFIG))) {
+            result = this.findFile(startPath, TS_CONFIG);
+        }
+
+        // If not one of the two configs found, throw Error
+        if(!result) {
+            throw new Error('Config file could not be found!');
+        }
+
+        return result;
+    }
+
     /**
      * File finder which traverses parent directories
      * until a given filename is found.
      * @param startPath
      * @param filename
-     * @returns {FileFindResult}
+     * @returns { ConfigFile, boolean }
      */
-    public static findFile(startPath: string, filename: string): FileFindResult {
-        let result = new FileFindResult();
-        let sep = path.sep;
-        let parts = startPath.split(sep);
+    public static findFile(startPath: string, filename: string): any {
+        let result: ConfigFile | boolean = false;
+        const sep = path.sep;
+        const parts = startPath.split(sep);
+        let fullPath: string;
 
         let tmpStr: string = sep;
 
@@ -59,18 +84,12 @@ export class ParentFileFinder {
 
         for (let i = parts.length - 1; i > 0; i--) {
             tmpStr = parts[i];
-            filename = path.resolve(tmpStr, filename);
+            fullPath = path.resolve(tmpStr, filename);
 
-            if (fs.existsSync(filename)) {
-                result.fileFound = true;
-                result.path = tmpStr;
-                result.result = filename;
+            if (fs.existsSync(fullPath)) {
+                result = new ConfigFile(tmpStr, fullPath, filename);
                 break;
             }
-        }
-
-        if(result.fileFound) {
-            console.log(chalk.yellow('Successfully found config file at <' + chalk.bold(filename) + '>'));
         }
 
         return result;

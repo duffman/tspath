@@ -26,21 +26,18 @@
 
 // @ts-ignore
 import * as Confirm from 'prompt-confirm';
-import { ParserEngine } from './parser-engine';
-import { ParentFileFinder } from './parent-file-finder';
-import { TS_CONFIG, TSPATH_CONFIG, IArguments } from './lib/type-definitions';
+import { ParserEngine } from './ParserEngine';
+import { ConfigFinder } from './ConfigFinder';
+import { IArguments } from './lib/type-definitions';
 import chalk from 'chalk';
-import { FileFindResult } from './lib/FileFindResult';
+import { ConfigFile } from './lib/ConfigFile';
 // @ts-ignore
 import { version } from '../package.json';
-import * as path from 'path';
 
 /**
  * TSPath main class
  */
 export class TSPath {
-    private engine = new ParserEngine();
-
     /**
      * TSPath constructor, logs version
      */
@@ -59,23 +56,16 @@ export class TSPath {
         const projectPath = process.cwd();
         const compactOutput = !args.preserve;
 
-        let config: FileFindResult;
-        if (args.conf) {
-             config = ParentFileFinder.findFile(process.cwd() + '/' + args.conf, TSPATH_CONFIG);
-             if(!config.fileFound) {
-                 console.log(chalk.bold.red('Given configuration path <' + args.conf + '> is not resolvable'));
-                 process.exit(23);
-             }
-        } else {
-            config = ParentFileFinder.findFile(projectPath, TSPATH_CONFIG);
-            if(!config.fileFound) {
-                config = ParentFileFinder.findFile(projectPath, TS_CONFIG);
+        let config: ConfigFile;
+        try {
+            let confPath = projectPath;
+            if (typeof args.conf === 'string' && '' !== args.conf) {
+                confPath = projectPath + '/' + args.conf;
             }
-
-            if(!config.fileFound) {
-                console.log(chalk.bold.red('Could not find the required configuration file'));
-                process.exit(23);
-            }
+            config = ConfigFinder.find(confPath);
+        } catch($err) {
+            console.log(chalk.bold.red('Could not find the required configuration file'));
+            process.exit(23);
         }
 
         if (args.ext || args.filter) {
@@ -90,20 +80,15 @@ export class TSPath {
             process.exit(23);
         }
 
-        this.engine.compactMode = compactOutput;
-        this.engine.setFileFilter(filter);
-
-        if (force && config.fileFound) {
-            scope.processPath(config.path, config.result);
-        } else if (config.fileFound) {
-            new Confirm('Files found at <' + config.path + '>, continue processing ?')
-                .ask(function(answer: boolean) {
+        if (force) {
+            scope.processPath(config!.path, config!.fullPath, config!.fileName, compactOutput, filter);
+        } else {
+            new Confirm('Files found at <' + config!.path + '>, continue processing ?')
+                .ask((answer: boolean) => {
                     if (answer) {
-                        scope.processPath(config.path, config.result);
+                        scope.processPath(config!.path, config!.fullPath, config!.fileName, compactOutput, filter);
                     }
                 });
-        } else {
-            console.log(chalk.bold('No project root found!'));
         }
   }
 
@@ -111,10 +96,12 @@ export class TSPath {
      * Process project path
      * @param projectPath
      * @param configPath
+     * @param fileName
+     * @param compactOutput
+     * @param filter
      */
-    private processPath(projectPath: string, configPath: string): void {
-        if (this.engine.setProjectPath(projectPath)) {
-            this.engine.execute(configPath);
-        }
+    private processPath(projectPath: string, configPath: string, fileName: string, compactOutput: boolean, filter: string[]): void {
+        const engine: ParserEngine = new ParserEngine(projectPath, fileName, compactOutput, filter);
+        engine.execute(configPath);
     }
 }

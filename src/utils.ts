@@ -22,7 +22,8 @@
 
  =----------------------------------------------------------------= */
 
-let path = require('path');
+// tslint:disable-next-line:no-var-requires
+const path = require('path');
 
 export class Utils {
     /**
@@ -45,15 +46,16 @@ export class Utils {
      * @param searchPath
      * @returns {string}
      */
-    public static ensureTrailingPathDelimiter(searchPath: string) {
+    public static ensureTrailingPathDelimiter(searchPath: string): string {
         if (Utils.isEmpty(searchPath)) {
-            return;
+            return '';
         }
 
-        let pathSep = path.sep;
-        if (searchPath.endsWith(pathSep) == false) {
+        const pathSep = path.sep;
+        if (!searchPath.endsWith(pathSep)) {
             searchPath = searchPath + pathSep;
         }
+
         return searchPath;
     }
 
@@ -77,41 +79,29 @@ export class Utils {
      * @param input
      * @returns {boolean}
      */
-    public static isEmpty(input): boolean {
+    public static isEmpty(input: any): boolean {
         return (input === undefined || input === null || input === '');
     }
 
     /**
      * Removes the trailing "*" from a string (if any)
-     * @param path
      * @returns {string}
+     * @param filePath
      */
-    public static stripWildcard(path: string): string {
-        if (path.endsWith('/*')) {
-            path = path.substr(0, path.length - 2);
+    public static stripWildcard(filePath: string): string {
+        if (filePath.endsWith('/*')) {
+            filePath = filePath.substr(0, filePath.length - 2);
         }
 
-        return path;
+        return filePath;
     }
 
     /**
      * Replaces double slashes "//" (if any)
      * @param filePath
      */
-    static replaceDoubleSlashes(filePath: string) {
-        filePath = path.normalize(filePath);
-    }
-
-    /**
-     * Converts EFBBBF (UTF-8 BOM) to FEFF (UTF-16 BOM)
-     * @param data
-     */
-    public static stripByteOrderMark(data: string) {
-        if (data.charCodeAt(0) === 0xFEFF) {
-            data = data.slice(1);
-        }
-
-        return data;
+    public static replaceDoubleSlashes(filePath: string): string {
+        return path.normalize(filePath);
     }
 
     /**

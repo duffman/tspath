@@ -33,16 +33,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Utils } from './utils';
-import { TS_CONFIG } from './type-definitions';
-
-export class FileFindResult {
-    constructor(
-        public fileFound: boolean = false,
-        public path: string = '',
-        public result: string = ''
-    ) {
-    }
-}
+import chalk from 'chalk';
+import { FileFindResult } from './lib/FileFindResult';
 
 export class ParentFileFinder {
     /**
@@ -67,7 +59,7 @@ export class ParentFileFinder {
 
         for (let i = parts.length - 1; i > 0; i--) {
             tmpStr = parts[i];
-            filename = path.resolve(tmpStr, TS_CONFIG);
+            filename = path.resolve(tmpStr, filename);
 
             if (fs.existsSync(filename)) {
                 result.fileFound = true;
@@ -75,6 +67,10 @@ export class ParentFileFinder {
                 result.result = filename;
                 break;
             }
+        }
+
+        if(result.fileFound) {
+            console.log(chalk.yellow('Successfully found config file at <' + chalk.bold(filename) + '>'));
         }
 
         return result;

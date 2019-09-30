@@ -3,8 +3,8 @@
   "version": "2.0.0",
   "description": "TypeScript Path Igniter resolves @paths specified in tsconfig",
   "scripts": {
-    "build": "tsc",
-    "tspath": "node ./dist/index.js",
+    "build": "NODE_ENV=production tsc && cp package.json dist/",
+    "tspath": "NODE_ENV=dev node ./dist/index.js",
     "watch": "tsc -w"
   },
   "bin": {
@@ -19,22 +19,25 @@
     "alias"
   ],
   "author": "Bart van Sleeuwen <bart.vansleeuwen@pidz.nl>",
+  "license": "LGPL-2.0+",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pidz-development/tspath-aws-sam.git"
   },
-  "license": "LGPL-2",
   "dependencies": {
-    "@types/node": "^8.0.25",
     "chalk": "^2.4.2",
+    "escodegen": "^1.12.0",
+    "esprima": "^4.0.1",
     "prompt-confirm": "^2.0.4",
-    "typescript": "^2.4.2",
     "yargs": "^14.0.0"
   },
   "devDependencies": {
-    "concurrently": "^4.1.2",
-    "nodemon": "^1.19.2",
+    "@types/escodegen": "^0.0.6",
+    "@types/esprima": "^4.0.2",
+    "@types/node": "^8.0.25",
+    "@types/yargs": "^13.0.3",
     "tslint": "^5.18.0",
-    "tslint-eslint-rules": "^5.4.0"
+    "tslint-eslint-rules": "^5.4.0",
+    "typescript": "^2.4.2"
   }
 }

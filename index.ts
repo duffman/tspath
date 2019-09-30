@@ -1,8 +1,5 @@
-import {TSPath} from './src/tspath';
-
-process.argv.slice(2);
-console.log(process.argv);
-process.exit();
+import { TSPath } from './src/tspath';
+import { argv } from 'yargs';
 
 const TsPath = new TSPath();
-TsPath.execute();
+TsPath.execute(argv);

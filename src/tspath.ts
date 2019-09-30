@@ -24,33 +24,62 @@
 
  =----------------------------------------------------------------= */
 
-
-import Confirm from 'prompt-confirm';
+// @ts-ignore
+import * as Confirm from 'prompt-confirm';
 import { ParserEngine } from './parser-engine';
 import { ParentFileFinder } from './parent-file-finder';
-import { TS_CONFIG } from './type-definitions';
+import { TS_CONFIG, TSPATH_CONFIG, IArguments } from './lib/type-definitions';
 import chalk from 'chalk';
-import { argv as yargs } from 'yargs';
+import { FileFindResult } from './lib/FileFindResult';
+// @ts-ignore
 import { version } from '../package.json';
+import * as path from 'path';
 
-
+/**
+ * TSPath main class
+ */
 export class TSPath {
     private engine = new ParserEngine();
 
+    /**
+     * TSPath constructor, logs version
+     */
     constructor() {
         console.log(chalk.yellow('TSPath ' + version));
-        let args = process.argv.slice(2);
-        let param = args[0];
+    }
+
+    /**
+     * Execute command
+     * @param args
+     */
+    public execute(args: IArguments): void {
         let filter = ['js'];
-        let force: boolean = (yargs.force || yargs.f);
-        let projectPath = process.cwd();
-        let compactOutput = yargs.preserve ? false : true;
-        let findResult = ParentFileFinder.findFile(projectPath, TS_CONFIG);
+        const scope = this;
+        const force: boolean = args.force || args.f;
+        const projectPath = process.cwd();
+        const compactOutput = !args.preserve;
 
-        let scope = this;
+        let config: FileFindResult;
+        if (args.conf) {
+             config = ParentFileFinder.findFile(process.cwd() + '/' + args.conf, TSPATH_CONFIG);
+             if(!config.fileFound) {
+                 console.log(chalk.bold.red('Given configuration path <' + args.conf + '> is not resolvable'));
+                 process.exit(23);
+             }
+        } else {
+            config = ParentFileFinder.findFile(projectPath, TSPATH_CONFIG);
+            if(!config.fileFound) {
+                config = ParentFileFinder.findFile(projectPath, TS_CONFIG);
+            }
 
-        if (yargs.ext || yargs.filter) {
-            let argFilter = yargs.ext ? yargs.ext : yargs.filter;
+            if(!config.fileFound) {
+                console.log(chalk.bold.red('Could not find the required configuration file'));
+                process.exit(23);
+            }
+        }
+
+        if (args.ext || args.filter) {
+            const argFilter = args.ext ? args.ext : args.filter;
             filter = argFilter.split(',').map((ext) => {
                 return ext.replace(/\s/g, '');
             });
@@ -64,27 +93,28 @@ export class TSPath {
         this.engine.compactMode = compactOutput;
         this.engine.setFileFilter(filter);
 
-        if (force && findResult.fileFound) {
-            scope.processPath(findResult.path);
-        } else if (findResult.fileFound) {
-            new Confirm('Process project at: <' + findResult.path + '> ?')
-                .ask(function(answer) {
-                    if (true === answer) {
-                        scope.processPath(findResult.path);
+        if (force && config.fileFound) {
+            scope.processPath(config.path, config.result);
+        } else if (config.fileFound) {
+            new Confirm('Files found at <' + config.path + '>, continue processing ?')
+                .ask(function(answer: boolean) {
+                    if (answer) {
+                        scope.processPath(config.path, config.result);
                     }
                 });
         } else {
             console.log(chalk.bold('No project root found!'));
         }
-    }
+  }
 
-    public execute(args: object): void {
-
-	}
-
-    private processPath(projectPath: string) {
+    /**
+     * Process project path
+     * @param projectPath
+     * @param configPath
+     */
+    private processPath(projectPath: string, configPath: string): void {
         if (this.engine.setProjectPath(projectPath)) {
-            this.engine.execute();
+            this.engine.execute(configPath);
         }
     }
 }

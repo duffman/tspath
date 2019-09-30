@@ -43,38 +43,46 @@ enum JsonParserState {
     InLineComment,
     InBlockComment,
     InObject,
-    InQuote
+    InQuote,
 }
 
+/**
+ * Json comment stripper
+ */
 export class JsonCommentStripper {
     private currState = JsonParserState.None;
-    private prevtState = JsonParserState.None;
+    private prevState = JsonParserState.None;
 
-    constructor() {
-    }
-
-    public stripComments(data: string) {
+    /**
+     * Strip away comment lines
+     * @param data
+     */
+    public stripComments(data: string): string {
         return this.parse(data);
     }
 
-    parse(data: string): string {
-        var lineNum = 1;
-        var linePos = 1;
+    /**
+     * Parse file content
+     * @param data
+     */
+    public parse(data: string): string {
+        let lineNum = 1;
+        let linePos = 1;
 
-        var prevChar = '';
-        var currChar = '';
-        var aheadChar = '';
+        let prevChar = '';
+        let currChar = '';
+        let aheadChar = '';
 
-        var chunk = '';
+        let chunk = '';
 
-        for (var i = 0; i < data.length; i++) {
+        for (let i = 0; i < data.length; i++) {
             prevChar = currChar;
             currChar = data[i];
             aheadChar = data[i + 1];
 
             linePos++;
 
-            if (currChar == '\n') {
+            if (currChar === '\n') {
                 if (this.inState(JsonParserState.InLineComment)) {
                     this.setState(JsonParserState.None);
                 }
@@ -84,20 +92,20 @@ export class JsonCommentStripper {
             }
 
             // Allow block comments everywhere except in quotes
-            if (currChar == '/' && aheadChar == '*' && !this.inState(JsonParserState.InQuote)) {
+            if (currChar === '/' && aheadChar === '*' && !this.inState(JsonParserState.InQuote)) {
                 i++;
                 this.setState(JsonParserState.InBlockComment);
                 continue;
             }
 
-            if (currChar == '/' && aheadChar == '/' && this.inState(JsonParserState.None)) {
+            if (currChar === '/' && aheadChar === '/' && this.inState(JsonParserState.None)) {
                 i++;
                 this.setState(JsonParserState.InLineComment);
                 continue;
             }
 
             // If this is an end block comment, return to the previous state
-            if (currChar == '*' && aheadChar == '/' && this.inState(JsonParserState.InBlockComment)) {
+            if (currChar === '*' && aheadChar === '/' && this.inState(JsonParserState.InBlockComment)) {
                 i++;
                 this.setPrevState();
                 continue;
@@ -117,25 +125,43 @@ export class JsonCommentStripper {
         return chunk;
     }
 
+    /**
+     * Validate if quote
+     * @param char
+     */
     private isQuote(char: string): boolean {
-        return (char == '"' || char == '\'');
+        return (char === '"' || char === '\'');
     }
 
-    private setState(state: JsonParserState) {
-        if (state != this.currState) {
-            this.prevtState = this.currState;
+    /**
+     * Set state
+     * @param state
+     */
+    private setState(state: JsonParserState): void {
+        if (state !== this.currState) {
+            this.prevState = this.currState;
             this.currState = state;
         }
     }
 
-    private inState(state: JsonParserState) {
-        return this.currState == state;
+    /**
+     * Validate if in state
+     * @param state
+     */
+    private inState(state: JsonParserState): boolean {
+        return this.currState === state;
     }
 
-    private setPrevState() {
-        this.setState(this.prevtState);
+    /**
+     * Set previous state
+     */
+    private setPrevState(): void {
+        this.setState(this.prevState);
     }
 
+    /**
+     * Validate if in comment
+     */
     private inComment(): boolean {
         return this.inState(JsonParserState.InLineComment)
             || this.inState(JsonParserState.InBlockComment);

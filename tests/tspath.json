@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "outDir": "from/",
+    "baseUrl": "/opt",
+    "toDir": "to/",
+    "paths": {
+      "@test": ["/converted/to/a/correct/path"],
+      "@lib": ["/this/works/well"],
+      "@src": ["/another/success/story"]
+    }
+  }
+}

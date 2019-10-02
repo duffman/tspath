@@ -1,0 +1,44 @@
+{
+  "name": "tspath-aws-sam",
+  "version": "2.0.0",
+  "description": "TypeScript Path Igniter resolves @paths specified in tsconfig",
+  "scripts": {
+    "build": "NODE_ENV=production tsc && cp package.json dist/",
+    "tspath": "NODE_ENV=dev node ./dist/index.js",
+    "tspath:debug": "NODE_ENV=dev node --inspect=9229 ./dist/index.js",
+    "watch": "tsc -w"
+  },
+  "bin": {
+    "tspath": "./dist/index.js"
+  },
+  "keywords": [
+    "relative",
+    "path",
+    "typescript",
+    "path",
+    "resolve",
+    "alias"
+  ],
+  "author": "Bart van Sleeuwen <bart.vansleeuwen@pidz.nl>",
+  "license": "LGPL-2.0+",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pidz-development/tspath-aws-sam.git"
+  },
+  "dependencies": {
+    "chalk": "^2.4.2",
+    "escodegen": "^1.12.0",
+    "esprima": "^4.0.1",
+    "prompt-confirm": "^2.0.4",
+    "yargs": "^14.0.0"
+  },
+  "devDependencies": {
+    "@types/escodegen": "^0.0.6",
+    "@types/esprima": "^4.0.2",
+    "@types/node": "^8.0.25",
+    "@types/yargs": "^13.0.3",
+    "tslint": "^5.18.0",
+    "tslint-eslint-rules": "^5.4.0",
+    "typescript": "^2.4.2"
+  }
+}

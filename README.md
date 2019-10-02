@@ -77,7 +77,8 @@ Say bye bye to the relative path hell!
 
 ```bash
 - f | force <boolean>:      Always overwrite files in out directory
-- root <string>:            Root directory
+- root <string>:            Root directory to start processing
 - preserve <boolean>:       If set to true, minifying will not happen
-- filter | ext <string>:    File extension filtering (default .js)
+- filter | ext <string>:    File extension filtering, comma seperated (default .js)
+- absPath <boolean>:        Replace paths with absolute paths instead of relative 
 ```

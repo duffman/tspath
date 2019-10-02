@@ -1,8 +1,8 @@
 import * as path from "path";
 import * as fs from "fs";
 import { FILE_ENCODING, TS_CONFIG } from './constants';
-import { JsonCommentStripper } from '../json-comment-stripper';
-import { ProjectOptions } from './project-options';
+import { JsonCommentStripper } from '../JsonCommentStripper';
+import { ProjectOptions } from './ProjectOptions';
 
 /**
  * Config file class

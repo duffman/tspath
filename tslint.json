@@ -48,6 +48,16 @@
     "typedef": [
       true,
       "call-signature"
-    ]
+    ],
+    "variable-name": {
+      "options": [
+        "ban-keywords",
+        "check-format",
+        "allow-leading-underscore",
+        "require-const-for-all-caps",
+        "allow-pascal-case",
+        "allow-snake-case"
+      ]
+    }
   }
 }

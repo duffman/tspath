@@ -55,7 +55,8 @@ export class ConfigFinder {
 
         // If not one of the two configs found, throw Error
         if(!result) {
-            throw new Error('Config file could not be found!');
+            console.log('WAAAAA', result);
+            throw new Error('Could not find the required configuration file');
         }
 
         return result;

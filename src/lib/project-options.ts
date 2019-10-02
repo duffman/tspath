@@ -22,24 +22,64 @@
 
  =----------------------------------------------------------------= */
 
-import { ISettings } from './type-definitions';
+import { ISettings } from './ISettings';
+import { Utils } from '../utils';
+import chalk from 'chalk';
 
+/**
+ * Project Options Class
+ */
 export class ProjectOptions {
-    public outDir: string;
-    public baseUrl: string;
+    public outDir: string | null = null;
+    public baseUrl: string | null = null;
     public pathMappings: ISettings;
 
-    constructor(tsconfigObj: any) {
+    /**
+     * ProjectOptions Constructor
+     * @param configObj
+     */
+    constructor(configObj: any) {
         this.pathMappings = {};
-        this.outDir = tsconfigObj.outDir;
-        this.baseUrl = tsconfigObj.baseUrl;
-        this.processMappings(tsconfigObj.paths);
+        this.outDir = configObj.outDir || './';
+        this.baseUrl = configObj.baseUrl;
+        this.processMappings(configObj.paths);
+        this.validate();
     }
 
-    //TODO: Support fallbacks
-    public processMappings(mappings: any) {
-        for (var alias in mappings) {
+    /**
+     * Process path mappings
+     * @param mappings
+     */
+    public processMappings(mappings: ISettings[]): void {
+        // tslint:disable-next-line:forin
+        for (const alias in mappings) {
             this.pathMappings[alias] = mappings[alias][0]; // No support for fallbacks yet...
         }
+    }
+
+    /**
+     * Validate input
+     */
+    private validate(): void {
+        try {
+            this.validateKey('pathMappings')
+                .validateKey('baseUrl');
+        } catch(e) {
+            console.log(chalk.red.bold('Missing required field in config:') + ' "' + chalk.bold.underline(e.message) + '"');
+            process.exit(22);
+        }
+    }
+
+    /**
+     * Exit on invalid key
+     * @param key
+     */
+    private validateKey(key: string): ProjectOptions {
+        // @ts-ignore
+        if (!this.hasOwnProperty(key) || Utils.isEmpty(this[key])) {
+            throw new Error(key);
+        }
+
+        return this;
     }
 }

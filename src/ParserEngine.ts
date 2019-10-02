@@ -25,50 +25,43 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Utils } from './utils';
-import { JsonCommentStripper } from './json-comment-stripper';
-import { ProjectOptions } from './lib/project-options';
 import { FILE_ENCODING } from './lib/constants';
 
 import * as esprima from 'esprima';
 import chalk from 'chalk';
 import * as escodegen from 'escodegen';
+import { ConfigFile } from './lib/ConfigFile';
+import { PathResolver } from './lib/PathResolver';
+import { Arguments } from './lib/Arguments';
 
 /**
  * Parser engine class
  */
 export class ParserEngine {
-    public projectPath: string;
-    public fileName: string;
-    public compactMode: boolean = true;
+    private config: ConfigFile;
+    private args: Arguments;
+    private pathResolver: PathResolver;
 
+    private readonly fileFilter: string;
     private nrFilesProcessed: number = 0;
     private nrPathsProcessed: number = 0;
-    private appRoot: string;
-    private distRoot: string;
-    private projectOptions: ProjectOptions;
-    private tsConfig: any;
-    private readonly fileFilter: string;
 
     /**
      * ParserEngine constructor
-     * @param projectPath
-     * @param fileName
-     * @param compactMode
-     * @param filter
+     * @param config
+     * @param args
      */
-    constructor(projectPath: string, fileName: string, compactMode: boolean, filter: string[]) {
-        this.projectPath = projectPath;
-        this.fileName = fileName;
-        this.compactMode = compactMode;
-        this.fileFilter = filter.map((e) => {
-            return !e.startsWith('.') ? '.' + e : e;
-        }).join(',');
+    constructor(config: ConfigFile, args: Arguments) {
+        this.config = config;
+        this.args = args;
+        this.fileFilter = args.ext ? args.ext : args.filter;
+        this.pathResolver = new PathResolver(config);
     }
     /**
      * Exit
      * @param code
      */
-    public exit(code: number = 5): void {
+    private exit(code: number = 5): void {
         console.log('Terminating...');
         process.exit(code);
     }
@@ -76,37 +69,31 @@ export class ParserEngine {
     /**
      * Parse project and resolve paths
      */
-    public execute(configPath: string = ''): void {
+    public execute(): void {
         const PROCESS_TIME = 'Operation finished in';
         console.time(PROCESS_TIME);
 
-        if (!Utils.isEmpty(this.projectPath) && !this.validateProjectPath(this.projectPath)) {
-            console.log(chalk.red.bold('Project Path "' + chalk.underline(this.projectPath) + '" is invalid!'));
+        if (!Utils.isEmpty(this.pathResolver.projectRoot) && !this.validateProjectPath(this.pathResolver.projectRoot)) {
+            console.log(chalk.red.bold('Project Path "' + chalk.underline(this.pathResolver.projectRoot) + '" is invalid!'));
             this.exit(10);
         }
 
-        this.projectOptions = this.readConfig(configPath);
         const projectName = this.readProjectName();
 
         if (!Utils.isEmpty(projectName)) {
-            console.log(chalk.yellow('Parsing project: ') + chalk.bold(projectName) + ' ' + chalk.underline(this.projectPath));
+            console.log(chalk.yellow('Parsing project: ') + chalk.bold(projectName) + ' ' + chalk.underline(this.pathResolver.projectRoot));
         } else {
-            console.log(chalk.yellow.bold('Parsing project at: ') + '"' + this.projectPath + '"');
+            console.log(chalk.yellow.bold('Parsing project at: ') + '"' + this.pathResolver.projectRoot + '"');
         }
-
-        this.appRoot = path.resolve(this.projectPath, this.projectOptions.baseUrl);
-        this.distRoot = path.resolve(this.projectPath, this.projectOptions.outDir);
 
         const fileList = new Array<string>();
 
-        console.log(this);
-        process.exit();
-        this.walkSync(this.distRoot, fileList, this.fileFilter);
+        this.walkSync(this.pathResolver.distRoot, fileList, this.fileFilter);
 
         // tslint:disable-next-line:prefer-for-of
         for (let i = 0; i < fileList.length; i++) {
             const filename = fileList[i];
-            this.processFile(filename);
+            this.processFile(filename, this.pathResolver.projectRoot);
         }
 
         console.log(chalk.bold('Total files processed:'), this.nrFilesProcessed);
@@ -123,7 +110,7 @@ export class ParserEngine {
      * @returns {string}
      */
     public getRelativePathForRequiredFile(sourceFilename: string, jsRequire: string): string {
-        const options = this.projectOptions;
+        const options = this.config.projectOptions;
 
         // tslint:disable-next-line:forin
         for (const alias in options.pathMappings) {
@@ -137,12 +124,16 @@ export class ParserEngine {
             // Cut alias prefix for mapping comparison
             const requirePrefix = jsRequire.substring(0, jsRequire.indexOf(path.sep));
 
+            let pathPrefix = './';
+            if(this.args.absPath) {
+                pathPrefix = '/';
+            }
             if (requirePrefix === strippedAlias) {
                 let result = jsRequire.replace(strippedAlias, mapping);
                 Utils.replaceDoubleSlashes(result);
                 result = Utils.ensureTrailingPathDelimiter(result);
 
-                const absoluteJsRequire = path.join(this.distRoot, result);
+                const absoluteJsRequire = path.join(this.pathResolver.distRoot, result);
                 const sourceDir = path.dirname(sourceFilename);
 
                 let relativePath = path.relative(sourceDir, absoluteJsRequire);
@@ -151,7 +142,7 @@ export class ParserEngine {
                  * as in ../ or ..\ so assume it´ the same dir...
                  */
                 if (relativePath[0] !== '.') {
-                    relativePath = './' + relativePath;
+                    relativePath = pathPrefix + relativePath;
                 }
 
                 jsRequire = relativePath;
@@ -188,8 +179,9 @@ export class ParserEngine {
     /**
      * Extracts all the requires from a single file and processes the paths
      * @param filename
+     * @param baseUrl
      */
-    public processFile(filename: string): void {
+    public processFile(filename: string, baseUrl: string): void {
         this.nrFilesProcessed++;
 
         const scope = this;
@@ -211,7 +203,7 @@ export class ParserEngine {
             }
         });
 
-        const option = { comment: true, format: { compact: this.compactMode, quotes: '"' } };
+        const option = { comment: true, format: { compact: !this.args.preserve, quotes: '"' } };
         const finalSource = escodegen.generate(ast, option);
 
         try {
@@ -237,46 +229,12 @@ export class ParserEngine {
     }
 
     /**
-     * Read and parse the TypeScript configuration file
-     * @param configFilename
-     */
-    public readConfig(configFilename: string = ''): ProjectOptions {
-        const fileName = path.resolve(this.projectPath, configFilename);
-        let fileData = fs.readFileSync(path.resolve(this.projectPath, fileName), { encoding: FILE_ENCODING });
-        console.log('fileData', fileData);
-
-        const jsonCS = new JsonCommentStripper();
-        fileData = jsonCS.stripComments(fileData);
-
-        this.tsConfig = JSON.parse(fileData);
-
-        const compilerOpt = this.tsConfig.compilerOptions;
-
-        const reqFields = {
-            baseUrl: compilerOpt.baseUrl,
-            outDir:compilerOpt.outDir,
-        };
-
-        // tslint:disable-next-line:forin
-        for (const key in reqFields) {
-            const field = reqFields[key];
-            if (Utils.isEmpty(field)) {
-                console.log(chalk.red.bold('Missing required field:') + ' "' + chalk.bold.underline(key) + '"');
-                this.exit(22);
-            }
-        }
-
-        return new ProjectOptions(compilerOpt);
-    }
-
-    /**
-     *
      * @param ast
      * @param scope
-     * @param func
+     * @param method
      */
-    public traverseSynTree(ast, scope, func): void {
-        func(ast);
+    public traverseSynTree(ast: any, scope: any, method: (ast: any) => void): void {
+        method(ast);
         for (const key in ast) {
             if (ast.hasOwnProperty(key)) {
                 const child = ast[key];
@@ -284,10 +242,10 @@ export class ParserEngine {
                 if (typeof child === 'object' && child !== null) {
                     if (Array.isArray(child)) {
                         child.forEach((astRecursive) => { // 5
-                            scope.traverseSynTree(astRecursive, scope, func);
+                            scope.traverseSynTree(astRecursive, scope, method);
                         });
                     } else {
-                        scope.traverseSynTree(child, scope, func);
+                        scope.traverseSynTree(child, scope, method);
                     }
                 }
             }
@@ -334,14 +292,14 @@ export class ParserEngine {
         let result = true;
 
         let configFile = Utils.ensureTrailingPathDelimiter(projectPath);
-        configFile += this.fileName;
+        configFile += this.config.fileName;
 
         if (!fs.existsSync(projectPath)) {
             result = false;
         }
 
         if (!fs.existsSync(configFile)) {
-            console.log('Compiler Configuration file ' + chalk.underline.bold(this.fileName) + ' is missing!');
+            console.log('Compiler Configuration file ' + chalk.underline.bold(this.config.fileName) + ' is missing!');
         }
 
         return result;
@@ -353,7 +311,7 @@ export class ParserEngine {
      */
     private readProjectName(): string {
         let projectName: string = '';
-        const filename = path.resolve(this.projectPath, 'package.json');
+        const filename = path.resolve(this.pathResolver.projectRoot, 'package.json');
 
         if (fs.existsSync(filename)) {
             const json = require(filename);

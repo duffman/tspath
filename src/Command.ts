@@ -28,16 +28,16 @@
 import * as Confirm from 'prompt-confirm';
 import { ParserEngine } from './ParserEngine';
 import { ConfigFinder } from './ConfigFinder';
-import { IArguments } from './lib/type-definitions';
 import chalk from 'chalk';
 import { ConfigFile } from './lib/ConfigFile';
 // @ts-ignore
 import { version } from '../package.json';
+import { Arguments } from './lib/Arguments';
 
 /**
  * TSPath main class
  */
-export class TSPath {
+export class Command {
     /**
      * TSPath constructor, logs version
      */
@@ -49,59 +49,35 @@ export class TSPath {
      * Execute command
      * @param args
      */
-    public execute(args: IArguments): void {
-        let filter = ['js'];
-        const scope = this;
+    public execute(args: Arguments): void {
         const force: boolean = args.force || args.f;
         const projectPath = process.cwd();
-        const compactOutput = !args.preserve;
 
-        let config: ConfigFile;
+        let config: ConfigFile | null = null;
         try {
             let confPath = projectPath;
-            if (typeof args.root === 'string' && '' !== args.root) {
+            if (args.root) {
                 confPath = projectPath + '/' + args.root;
             }
             config = ConfigFinder.find(confPath);
-        } catch($err) {
-            console.log(chalk.bold.red('Could not find the required configuration file'));
+            config.readContents();
+        } catch(err) {
+            console.log(chalk.bold.red(err));
             process.exit(23);
         }
 
-        if (args.ext || args.filter) {
-            const argFilter = args.ext ? args.ext : args.filter;
-            filter = argFilter.split(',').map((ext) => {
-                return ext.replace(/\s/g, '');
-            });
-        }
-
-        if (filter.length === 0) {
-            console.log(chalk.bold.red('File filter missing!'));
-            process.exit(23);
-        }
+        // @ts-ignore
+        const engine: ParserEngine = new ParserEngine(config, args);
 
         if (force) {
-            scope.processPath(config!.path, config!.fullPath, config!.fileName, compactOutput, filter);
+            engine.execute();
         } else {
             new Confirm('Files found at <' + config!.path + '>, continue processing ?')
                 .ask((answer: boolean) => {
                     if (answer) {
-                        scope.processPath(config!.path, config!.fullPath, config!.fileName, compactOutput, filter);
+                        engine.execute();
                     }
                 });
         }
   }
-
-    /**
-     * Process project path
-     * @param projectPath
-     * @param configPath
-     * @param fileName
-     * @param compactOutput
-     * @param filter
-     */
-    private processPath(projectPath: string, configPath: string, fileName: string, compactOutput: boolean, filter: string[]): void {
-        const engine: ParserEngine = new ParserEngine(projectPath, fileName, compactOutput, filter);
-        engine.execute(configPath);
-    }
 }

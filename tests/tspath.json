@@ -1,11 +1,15 @@
 {
-  "compilerOptions": {
-    "outDir": "src/",
-    "baseUrl": "/opt",
-    "paths": {
-      "@test": ["/converted/to/a/correct/path"],
-      "@lib": ["/this/works/well"],
-      "@src": ["/another/success/story"]
-    }
+  "outDir": "src/",
+  "baseUrl": "/opt",
+  "paths": {
+    "@test": [
+      "/converted/to/a/correct/path"
+    ],
+    "@lib": [
+      "/this/works/well"
+    ],
+    "@src": [
+      "/another/success/story"
+    ]
   }
 }

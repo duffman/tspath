@@ -25,13 +25,3 @@
 export interface ISettings {
     [key: string]: string;
 }
-
-export interface IArguments {
-    f: boolean;
-    force: boolean;
-    root: string | boolean;
-    preserve: boolean;
-    filter: string;
-    ext: string;
-    minify: boolean;
-}

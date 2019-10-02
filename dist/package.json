@@ -1,40 +1,44 @@
 {
-  "name": "tspath",
-  "version": "1.2.3",
-  "description": "TSPath TypeScript Path Alias Resolver",
-  "main": "index.js",
-  "preferGlobal": true,
-  "bin": {
-    "tspath": "src/tspath.js"
-  },
+  "name": "tspath-aws-sam",
+  "version": "2.0.0",
+  "description": "TypeScript Path Igniter resolves @paths specified in tsconfig",
   "scripts": {
-    "test": "test"
+    "build": "NODE_ENV=production tsc && cp package.json dist/",
+    "tspath": "NODE_ENV=dev node ./dist/index.js",
+    "tspath:debug": "NODE_ENV=dev node --inspect=9229 ./dist/index.js",
+    "watch": "tsc -w"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/duffman/tspath.git"
+  "bin": {
+    "tspath": "./dist/index.js"
   },
   "keywords": [
-    "Typescript",
-    "Path",
-    "Path",
-    "hell"
+    "relative",
+    "path",
+    "typescript",
+    "path",
+    "resolve",
+    "alias"
   ],
-  "author": "Patrik Forsberg <patrik.forsberg@coldmind.com>",
-  "license": "LGPL-2.0",
-  "bugs": {
-    "url": "https://github.com/duffman/tspath/issues"
+  "author": "Bart van Sleeuwen <bart.vansleeuwen@pidz.nl>",
+  "license": "LGPL-2.0+",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pidz-development/tspath-aws-sam.git"
   },
-  "homepage": "https://github.com/duffman/tspath#readme",
   "dependencies": {
-    "chalk": "^2.3.0",
-    "escodegen": "^1.8.1",
-    "esprima": "^4.0.0",
-    "prompt-confirm": "^1.2.0",
-    "typescript": "^2.4.2"
+    "chalk": "^2.4.2",
+    "escodegen": "^1.12.0",
+    "esprima": "^4.0.1",
+    "prompt-confirm": "^2.0.4",
+    "yargs": "^14.0.0"
   },
   "devDependencies": {
-    "chai": "^4.1.2",
-    "mocha": "^3.5.0"
+    "@types/escodegen": "^0.0.6",
+    "@types/esprima": "^4.0.2",
+    "@types/node": "^8.0.25",
+    "@types/yargs": "^13.0.3",
+    "tslint": "^5.18.0",
+    "tslint-eslint-rules": "^5.4.0",
+    "typescript": "^2.4.2"
   }
 }

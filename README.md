@@ -1,7 +1,6 @@
 # TSPath
 #### TypeScript Path Alias Resolver
 
-
 ***
 
 :warning: **Important!** There have been reports of shaky behaviour when tspath
@@ -47,7 +46,7 @@ as you can see, the readability have improved significantly!
 
 ```typescript
  import { IgniterApplication } from "@App/IgniterApplication";
- import { CrcCalculator }      from "@Utilils/FileUtilities";
+ import { CrcCalculator }      from "@Utils/FileUtilities";
  import { IMessageHandler }    from "@Messaging/IMessageHandler";
  import { IMessageHub }        from "@Messaging/Hub/IMessageHub";
  import { CronTabHelper }      from "@Utils/CronTabHelper";
@@ -72,3 +71,14 @@ Yes, that´s it, really!
 
 
 Say bye bye to the relative path hell!
+
+
+#### CLI Options
+
+```bash
+- f | force <boolean>:      Always overwrite files in out directory
+- root <string>:            Root directory to start processing
+- preserve <boolean>:       If set to true, minifying will not happen
+- filter | ext <string>:    File extension filtering, comma seperated (default .js)
+- absPath <boolean>:        Replace paths with absolute paths instead of relative 
+```

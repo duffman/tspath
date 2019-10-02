@@ -22,9 +22,6 @@
 
  =----------------------------------------------------------------= */
 
-export const FILE_ENCODING     = "UTF-8";
-export const TS_CONFIG         = "tsconfig.json";
-
-export interface ISettings {
-	[key: string]: string;
-}
+export const FILE_ENCODING = 'UTF-8';
+export const TS_CONFIG = 'tsconfig.json';
+export const TSPATH_CONFIG = 'tspath.json';

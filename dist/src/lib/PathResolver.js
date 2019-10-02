@@ -23,5 +23,30 @@
 
  =----------------------------------------------------------------= */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FILE_ENCODING = "UTF-8";
-exports.TS_CONFIG = "tsconfig.json";
+const path = require("path");
+/**
+ * PathResolver class
+ */
+class PathResolver {
+    /**
+     * PathResolver constructor
+     */
+    constructor(config) {
+        this._projectRoot = config.path;
+        this._appRoot = config.projectOptions.baseUrl ? path.resolve(this._projectRoot, config.projectOptions.baseUrl) : this._projectRoot;
+        this._distRoot = config.projectOptions.outDir ? path.resolve(this._projectRoot, config.projectOptions.outDir) : this._projectRoot;
+    }
+    /**
+     * ProjectRoot getter
+     */
+    get projectRoot() {
+        return this._projectRoot;
+    }
+    /**
+     * Dist root getter
+     */
+    get distRoot() {
+        return this._distRoot;
+    }
+}
+exports.PathResolver = PathResolver;

@@ -23,7 +23,8 @@
 
  =----------------------------------------------------------------= */
 Object.defineProperty(exports, "__esModule", { value: true });
-let path = require("path");
+// tslint:disable-next-line:no-var-requires
+const path = require('path');
 class Utils {
     /**
      * Helper method used to safely get the value of an AST node
@@ -32,7 +33,7 @@ class Utils {
      */
     static safeGetAstNodeValue(node) {
         if (Utils.isEmpty(node) || Utils.isEmpty(node.value)) {
-            return "";
+            return '';
         }
         else {
             return node.value;
@@ -47,10 +48,10 @@ class Utils {
      */
     static ensureTrailingPathDelimiter(searchPath) {
         if (Utils.isEmpty(searchPath)) {
-            return;
+            return '';
         }
-        let pathSep = path.sep;
-        if (searchPath.endsWith(pathSep) == false) {
+        const pathSep = path.sep;
+        if (!searchPath.endsWith(pathSep)) {
             searchPath = searchPath + pathSep;
         }
         return searchPath;
@@ -78,31 +79,21 @@ class Utils {
     }
     /**
      * Removes the trailing "*" from a string (if any)
-     * @param path
      * @returns {string}
+     * @param filePath
      */
-    static stripWildcard(path) {
-        if (path.endsWith("/*")) {
-            path = path.substr(0, path.length - 2);
+    static stripWildcard(filePath) {
+        if (filePath.endsWith('/*')) {
+            filePath = filePath.substr(0, filePath.length - 2);
         }
-        return path;
+        return filePath;
     }
     /**
      * Replaces double slashes "//" (if any)
      * @param filePath
      */
     static replaceDoubleSlashes(filePath) {
-        filePath = path.normalize(filePath);
-    }
-    /**
-     * Converts EFBBBF (UTF-8 BOM) to FEFF (UTF-16 BOM)
-     * @param data
-     */
-    static stripByteOrderMark(data) {
-        if (data.charCodeAt(0) === 0xFEFF) {
-            data = data.slice(1);
-        }
-        return data;
+        return path.normalize(filePath);
     }
     /**
      * Checks if a given filename contains a search path

@@ -23,18 +23,6 @@
 
  =----------------------------------------------------------------= */
 Object.defineProperty(exports, "__esModule", { value: true });
-class ProjectOptions {
-    //TODO: Support fallbacks
-    processMappings(mappings) {
-        for (var alias in mappings) {
-            this.pathMappings[alias] = mappings[alias][0]; // No support for fallbacks yet...
-        }
-    }
-    constructor(tsconfigObj) {
-        this.pathMappings = {};
-        this.outDir = tsconfigObj.outDir;
-        this.baseUrl = tsconfigObj.baseUrl;
-        this.processMappings(tsconfigObj.paths);
-    }
-}
-exports.ProjectOptions = ProjectOptions;
+exports.FILE_ENCODING = 'UTF-8';
+exports.TS_CONFIG = 'tsconfig.json';
+exports.TSPATH_CONFIG = 'tspath.json';

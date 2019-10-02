@@ -28,20 +28,15 @@ export declare class Utils {
     static isEmpty(input: any): boolean;
     /**
      * Removes the trailing "*" from a string (if any)
-     * @param path
      * @returns {string}
+     * @param filePath
      */
-    static stripWildcard(path: string): string;
+    static stripWildcard(filePath: string): string;
     /**
      * Replaces double slashes "//" (if any)
      * @param filePath
      */
-    static replaceDoubleSlashes(filePath: string): void;
-    /**
-     * Converts EFBBBF (UTF-8 BOM) to FEFF (UTF-16 BOM)
-     * @param data
-     */
-    static stripByteOrderMark(data: string): string;
+    static replaceDoubleSlashes(filePath: string): string;
     /**
      * Checks if a given filename contains a search path
      * @param filename

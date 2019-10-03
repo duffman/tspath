@@ -272,7 +272,9 @@ export class ParserEngine {
             if (fs.statSync(path.join(dir, file)).isDirectory()) {
                 fileList = this.walkSync(path.join(dir, file), fileList, fileExtension);
             } else {
-                if ((fileExtension.length > 0 && scope.matchExtension(fileExtension))
+                const tmpExt = path.extname(file);
+
+                if ((fileExtension.length > 0 && scope.matchExtension(tmpExt))
                     || (fileExtension.length < 1)
                     || (fileExtension === '*.*')) {
                     const fullFilename = path.join(dir, file);

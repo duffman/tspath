@@ -14,8 +14,8 @@ class Arguments {
         this.force = false;
         this.root = false;
         this.preserve = false;
-        this.filter = 'js';
-        this.ext = 'js';
+        this.filter = '.js';
+        this.ext = '.js';
         this.minify = false;
         this.absPath = false;
         this.args = args;
@@ -23,8 +23,8 @@ class Arguments {
         this.force = this.validateInput(args, 'force', 'boolean') ? args.force : false;
         this.root = this.validateInput(args, 'root', 'string') ? args.root : false;
         this.preserve = this.validateInput(args, 'preserve', 'boolean') ? args.preserve : false;
-        this.filter = this.validateInput(args, 'filter', 'string') ? args.filter : 'js';
-        this.ext = this.validateInput(args, 'ext', 'string') ? args.ext : 'js';
+        this.filter = this.validateInput(args, 'filter', 'string') ? args.filter : '.js';
+        this.ext = this.validateInput(args, 'ext', 'string') ? args.ext : '.js';
         this.minify = this.validateInput(args, 'minify', 'boolean') ? args.minify : false;
         this.absPath = this.validateInput(args, 'absPath', 'boolean') ? args.absPath : false;
     }

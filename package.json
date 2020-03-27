@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsc",
     "test": "mocha -r ts-node/register test/**.*/test.ts",
-    "tspath": "node ./dist/src/tspath.js"
+    "tspath": "node ./dist/tspath.js"
   },
   "preferGlobal": true,
   "bin": {

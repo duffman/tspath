@@ -47,8 +47,13 @@ export class ParserEngine {
 	projectOptions   : ProjectOptions;
 	tsConfig         : any;
 	fileFilter       : Array<string>;
+	baseUrl          : string;
 
-	constructor() {}
+	constructor(opts: {
+		baseUrl?: string
+	}) {
+		this.baseUrl = opts.baseUrl || null
+	}
 
 	public exit(code: number = 5) {
 		console.log("Terminating...");
@@ -285,7 +290,7 @@ export class ParserEngine {
 		let compilerOpt = this.tsConfig.compilerOptions;
 
 		let reqFields = [];
-		reqFields["baseUrl"] = compilerOpt.baseUrl;
+		reqFields["baseUrl"] = this.baseUrl || compilerOpt.baseUrl;
 		reqFields["outDir"] = compilerOpt.outDir;
 
 		for (let key in reqFields) {

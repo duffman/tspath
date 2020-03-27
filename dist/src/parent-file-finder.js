@@ -23,14 +23,6 @@
 
  =---------------------------------------------------------------=
 
- Json Comment Stripper
-
- Simple Parser used to strip block and line comments form a
- JSON formatted string.
-
- Worth knowing: The parser treat " and ' the same, so it´s
- possible to start a string with " and end it with '
-
  This file is part of the TypeScript Path Igniter Project:
  https://github.com/duffman/ts-path-igniter
 
@@ -62,14 +54,14 @@ class ParentFileFinder {
     static findFile(startPath, filename) {
         let result = new FileFindResult();
         let sep = path.sep;
-        var parts = startPath.split(sep);
-        var tmpStr = sep;
-        for (var i = 0; i < parts.length; i++) {
+        let parts = startPath.split(sep);
+        let tmpStr = sep;
+        for (let i = 0; i < parts.length; i++) {
             tmpStr = path.resolve(tmpStr, parts[i]);
             tmpStr = utils_1.Utils.ensureTrailingPathDelimiter(tmpStr);
             parts[i] = tmpStr;
         }
-        for (var i = parts.length - 1; i > 0; i--) {
+        for (let i = parts.length - 1; i > 0; i--) {
             tmpStr = parts[i];
             filename = path.resolve(tmpStr, type_definitions_1.TS_CONFIG);
             if (fs.existsSync(filename)) {

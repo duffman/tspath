@@ -13,7 +13,10 @@ const parent_file_finder_1 = require("./parent-file-finder");
 const type_definitions_1 = require("./type-definitions");
 class TSPath {
     constructor() {
-        this.engine = new parser_engine_1.ParserEngine();
+		console.log(yargs.baseUrl)
+        this.engine = new parser_engine_1.ParserEngine({
+            baseUrl: yargs.baseUrl
+        });
         log(chalk.yellow("TSPath " + pkg.version));
         let args = process.argv.slice(2);
         let param = args[0];

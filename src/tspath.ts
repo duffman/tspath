@@ -38,7 +38,9 @@ import { TS_CONFIG }        from "./type-definitions";
 
 
 export class TSPath {
-	private engine = new ParserEngine();
+	private engine = new ParserEngine({
+		baseUrl: yargs.baseUrl
+	});
 
 	constructor() {
 		log(chalk.yellow("TSPath " + pkg.version));

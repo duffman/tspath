@@ -1,7 +1,7 @@
 {
   "name": "tspath",
-  "version": "1.3.5",
-  "description": "TSPath TypeScript Path Alias Resolver",
+  "version": "2.0.0",
+  "description": "TSPath TypeScript Path Resolver",
   "main": "index.js",
   "preferGlobal": true,
   "bin": {

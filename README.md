@@ -61,5 +61,11 @@ $ tspath
 ```
 Yes, that´s it, really!
 
+Running headless, slip in a -f in order to
+bypass the confirmation prompt.
+
+```bash
+$ tspath -f
+```
 
 Say bye bye to the relative path hell!

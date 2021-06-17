@@ -16,6 +16,7 @@ below is an example of such hell.
 
 ```
 
+### Configuration
 By specifying path aliases in **tsconfig.json** you can use that alias to
 form an "absolute path"
  
@@ -30,6 +31,18 @@ form an "absolute path"
       "@Utils/*":       ["./Server/Tools/Utilities/*"]
     }
   }
+}
+```
+
+For full compability with the internal JavaScript parser,  
+specify **es5** as target.
+
+```json
+{
+  "compilerOptions": {
+    "target": "es5"
+     ...
+    }
 }
 ```
 

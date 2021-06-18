@@ -82,3 +82,10 @@ $ tspath -f
 ```
 
 Say bye bye to the relative path hell!
+
+#### Options
+
+
+| Arg | Type | Description | Default |
+|--------|------|-------------|---------|
+| `-f` | `boolean` | `optional` - skip the confirmation prompt displayed before `tspath` parses the project (e.g. `tspath -f`) | `false` |

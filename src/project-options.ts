@@ -22,7 +22,7 @@
 
  =----------------------------------------------------------------= */
 
-import { ISettings } from "./type-definitions";
+import { ISettings, ITSConfig, IPaths } from "./type-definitions";
 
 export class ProjectOptions {
 	public outDir: string;
@@ -30,13 +30,13 @@ export class ProjectOptions {
 	public pathMappings: ISettings;
 
 	//TODO: Support fallbacks
-	processMappings(mappings: any) {
+	processMappings(mappings: IPaths) {
 		for (var alias in mappings) {
 			this.pathMappings[alias] = mappings[alias][0]; // No support for fallbacks yet...
 		}
 	}
 
-	constructor(tsconfigObj: any) {
+	constructor(tsconfigObj: ITSConfig) {
 		this.pathMappings = {};
 		this.outDir = tsconfigObj.outDir;
 		this.baseUrl = tsconfigObj.baseUrl;

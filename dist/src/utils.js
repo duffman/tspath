@@ -23,6 +23,7 @@
 
  =----------------------------------------------------------------= */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Utils = void 0;
 let path = require("path");
 class Utils {
     /**
@@ -92,7 +93,7 @@ class Utils {
      * @param filePath
      */
     static replaceDoubleSlashes(filePath) {
-        filePath = path.normalize(filePath);
+        return path.normalize(filePath);
     }
     /**
      * Converts EFBBBF (UTF-8 BOM) to FEFF (UTF-16 BOM)

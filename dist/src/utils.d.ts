@@ -36,7 +36,7 @@ export declare class Utils {
      * Replaces double slashes "//" (if any)
      * @param filePath
      */
-    static replaceDoubleSlashes(filePath: string): void;
+    static replaceDoubleSlashes(filePath: string): string;
     /**
      * Converts EFBBBF (UTF-8 BOM) to FEFF (UTF-16 BOM)
      * @param data

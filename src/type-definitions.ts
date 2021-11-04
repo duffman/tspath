@@ -26,5 +26,5 @@ export const FILE_ENCODING     = "UTF-8";
 export const TS_CONFIG         = "tsconfig.json";
 
 export interface ISettings {
-	[key: string]: string;
+	[key: string]: Array<string>;
 }

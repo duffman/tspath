@@ -23,6 +23,7 @@
 
 =----------------------------------------------------------------= */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ParserEngine = void 0;
 let fs = require("fs");
 let path = require('path');
 let esprima = require("esprima");
@@ -125,32 +126,52 @@ class ParserEngine {
      */
     getRelativePathForRequiredFile(sourceFilename, jsRequire) {
         let options = this.projectOptions;
-        for (let alias in options.pathMappings) {
-            let mapping = options.pathMappings[alias];
+        alias: for (let alias in options.pathMappings) {
+            let mappings = options.pathMappings[alias];
             //TODO: Handle * properly
             alias = utils_1.Utils.stripWildcard(alias);
-            mapping = utils_1.Utils.stripWildcard(mapping);
+            mappings = mappings.map(item => utils_1.Utils.stripWildcard(item));
             // 2018-06-02: Workaround for bug with same prefix Aliases e.g @db and @dbCore
             // Cut alias prefix for mapping comparison
             let requirePrefix = jsRequire.substring(0, jsRequire.indexOf(path.sep));
             if (requirePrefix == alias) {
-                let result = jsRequire.replace(alias, mapping);
-                utils_1.Utils.replaceDoubleSlashes(result);
-                result = utils_1.Utils.ensureTrailingPathDelimiter(result);
-                let absoluteJsRequire = path.join(this.distRoot, result);
-                let sourceDir = path.dirname(sourceFilename);
-                let relativePath = path.relative(sourceDir, absoluteJsRequire);
-                /* If the path does not start with .. it´ not a sub directory
-                 * as in ../ or ..\ so assume it´ the same dir...
-                 */
-                if (relativePath[0] != ".") {
-                    relativePath = "./" + relativePath;
+                fallback: for (const mapping of mappings) {
+                    let result = jsRequire.replace(alias, mapping);
+                    result = utils_1.Utils.replaceDoubleSlashes(result);
+                    let absoluteJsRequire = path.join(this.distRoot, result);
+                    let sourceDir = path.dirname(sourceFilename);
+                    if (!this.isPathRequirable(absoluteJsRequire)) {
+                        continue fallback;
+                    }
+                    const absoluteJsRequireWithTrailingSlash = utils_1.Utils.ensureTrailingPathDelimiter(absoluteJsRequire);
+                    let relativePath = path.relative(sourceDir, absoluteJsRequireWithTrailingSlash);
+                    /* If the path does not start with .. it´ not a sub directory
+                    * as in ../ or ..\ so assume it´ the same dir...
+                    */
+                    if (relativePath[0] != ".") {
+                        relativePath = "./" + relativePath;
+                    }
+                    jsRequire = relativePath;
+                    break alias;
                 }
-                jsRequire = relativePath;
-                break;
             }
         }
         return jsRequire;
+    }
+    /**
+     * Check if this filename can be resolved with require
+     * @param node
+     * @param sourceFilename
+     * @returns
+     */
+    isPathRequirable(jspath) {
+        try {
+            require.resolve(jspath);
+            return true;
+        }
+        catch (error) {
+            return false;
+        }
     }
     /**
      * Processes the filename specified in require("filename")
@@ -166,7 +187,7 @@ class ParserEngine {
          */
         if (!utils_1.Utils.isEmpty(requireInJsFile) && utils_1.Utils.fileHavePath(requireInJsFile)) {
             let relativePath = this.getRelativePathForRequiredFile(sourceFilename, requireInJsFile);
-            resultNode = { type: "Literal", value: relativePath, raw: relativePath };
+            resultNode = { type: "Literal", value: relativePath, raw: "'" + relativePath + "'" };
             this.nrPathsProcessed++;
         }
         return resultNode;
@@ -291,7 +312,7 @@ class ParserEngine {
             }
             else {
                 let tmpExt = path.extname(file);
-                if ((fileExtension.length > 0 && scope.matchExtension(fileExtension))
+                if ((fileExtension.length > 0 && scope.matchExtension(tmpExt))
                     || (fileExtension.length < 1)
                     || (fileExtension == "*.*")) {
                     let fullFilename = path.join(dir, file);

@@ -29,10 +29,9 @@ export class ProjectOptions {
 	public baseUrl: string;
 	public pathMappings: ISettings;
 
-	//TODO: Support fallbacks
 	processMappings(mappings: any) {
 		for (var alias in mappings) {
-			this.pathMappings[alias] = mappings[alias][0]; // No support for fallbacks yet...
+			this.pathMappings[alias] = mappings[alias];
 		}
 	}
 

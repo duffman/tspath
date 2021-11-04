@@ -23,5 +23,6 @@
 
  =----------------------------------------------------------------= */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.TS_CONFIG = exports.FILE_ENCODING = void 0;
 exports.FILE_ENCODING = "UTF-8";
 exports.TS_CONFIG = "tsconfig.json";

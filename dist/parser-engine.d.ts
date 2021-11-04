@@ -17,12 +17,12 @@ export declare class ParserEngine {
      * @param {Array<string>} filter
      */
     setFileFilter(filter: Array<string>): void;
-    private validateProjectPath(projectPath);
+    private validateProjectPath;
     /**
      * Attempts to read the name property form package.json
      * @returns {string}
      */
-    private readProjectName();
+    private readProjectName;
     /**
      * Parse project and resolve paths
      */
@@ -34,6 +34,13 @@ export declare class ParserEngine {
      * @returns {string}
      */
     getRelativePathForRequiredFile(sourceFilename: string, jsRequire: string): string;
+    /**
+     * Check if this filename can be resolved with require
+     * @param node
+     * @param sourceFilename
+     * @returns
+     */
+    isPathRequirable(jspath: string): boolean;
     /**
      * Processes the filename specified in require("filename")
      * @param node
@@ -69,7 +76,7 @@ export declare class ParserEngine {
      * @param {string} fileExtension - ".xxx" or "xxx
      * @returns {boolean}
      */
-    private matchExtension(fileExtension);
+    private matchExtension;
     /**
      * Recursively walking a directory structure and collect files
      * @param dir

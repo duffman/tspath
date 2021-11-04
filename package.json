@@ -1,6 +1,6 @@
 {
   "name": "tspath",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "TypeScript Path Igniter resolves @paths specified in tsconfig",
   "scripts": {
     "build": "tsc",
@@ -26,12 +26,12 @@
   },
   "license": "LGPL-2",
   "dependencies": {
-    "@types/node": "^8.0.25",
+    "@types/node": "^8.10.66",
     "chalk": "^2.3.0",
     "escodegen": "^1.8.1",
     "esprima": "^4.0.0",
     "prompt-confirm": "^1.2.0",
-    "typescript": "^2.4.2",
+    "typescript": "^4.4.4",
     "yargs": "^11.0.0"
   },
   "devDependencies": {

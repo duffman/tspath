@@ -31,6 +31,7 @@
 
  =---------------------------------------------------------------= */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ParentFileFinder = exports.FileFindResult = void 0;
 const fs = require("fs");
 const path = require("path");
 const utils_1 = require("./utils");

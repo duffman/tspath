@@ -35,6 +35,13 @@ export declare class ParserEngine {
      */
     getRelativePathForRequiredFile(sourceFilename: string, jsRequire: string): string;
     /**
+     * Check if this filename can be resolved with require
+     * @param node
+     * @param sourceFilename
+     * @returns
+     */
+    isPathRequirable(jspath: string): boolean;
+    /**
      * Processes the filename specified in require("filename")
      * @param node
      * @param sourceFilename

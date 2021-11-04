@@ -99,8 +99,8 @@ export class Utils {
 	 * Replaces double slashes "//" (if any)
 	 * @param filePath
 	 */
-	static replaceDoubleSlashes(filePath: string) {
-		filePath = path.normalize(filePath);
+	static replaceDoubleSlashes(filePath: string): string {
+		return path.normalize(filePath);
 	}
 	/**
 	 * Converts EFBBBF (UTF-8 BOM) to FEFF (UTF-16 BOM)

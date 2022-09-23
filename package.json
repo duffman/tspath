@@ -1,7 +1,8 @@
 {
   "name": "tspath",
-  "version": "2.0.0",
+  "version": "2.5.0",
   "description": "TypeScript Path Igniter resolves @paths specified in tsconfig",
+  "license": "LGPL-2",
   "scripts": {
     "build": "tsc",
     "test": "mocha -r ts-node/register test/**.*/test.ts",
@@ -24,7 +25,6 @@
     "type": "git",
     "url": "git+https://github.com/duffman/tspath.git"
   },
-  "license": "LGPL-2",
   "dependencies": {
     "@types/node": "^8.0.25",
     "chalk": "^2.3.0",

@@ -331,7 +331,8 @@ export class ParserEngine {
 	 */
 	private matchExtension(fileExtension: string): boolean {
 		if (Utils.isEmpty(fileExtension) || this.fileFilter.length == 0) return false;
-		return this.fileFilter.indexOf(fileExtension) > -1;
+		const matchesFilter = this.fileFilter.find(f => fileExtension.endsWith(f)) !== undefined;
+		return matchesFilter;
 	}
 
 	/**
@@ -356,9 +357,7 @@ export class ParserEngine {
 			else {
 				let tmpExt = path.extname(file);
 
-				if ((fileExtension.length > 0 && scope.matchExtension(fileExtension))
-					|| (fileExtension.length < 1)
-					|| (fileExtension == "*.*")) {
+				if (scope.matchExtension(tmpExt)) {
 					let fullFilename = path.join(dir, file);
 					filelist.push(fullFilename);
 				}

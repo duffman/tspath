@@ -2,9 +2,11 @@ bin
 bin/
 dist
 dist/
-
+lib
+hack
+hack.*
 package-lock.json
-
+yarn.lock
 node_modules
 node_modules/
 test/

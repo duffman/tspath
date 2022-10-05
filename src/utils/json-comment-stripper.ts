@@ -43,7 +43,7 @@ enum JsonParserState {
 	InLineComment,
 	InBlockComment,
 	InObject,
-	InQuote
+	InQuote,
 }
 
 export class JsonCommentStripper {
@@ -56,8 +56,8 @@ export class JsonCommentStripper {
 		return this.parse(data);
 	}
 
-	private isQuote (char: string): boolean {
-		return (char == "\"" || char == "'");
+	private isQuote(char: string): boolean {
+		return char == '"' || char == "'";
 	}
 
 	private setState(state: JsonParserState) {
@@ -71,13 +71,12 @@ export class JsonCommentStripper {
 		return this.currState == state;
 	}
 
-	private setPrevState () {
+	private setPrevState() {
 		this.setState(this.prevtState);
 	}
 
 	private inComment(): boolean {
-		return this.inState(JsonParserState.InLineComment)
-			|| this.inState(JsonParserState.InBlockComment);
+		return this.inState(JsonParserState.InLineComment) || this.inState(JsonParserState.InBlockComment);
 	}
 
 	parse(data: string): string {
@@ -128,14 +127,11 @@ export class JsonCommentStripper {
 
 			if (this.isQuote(currChar) && this.inState(JsonParserState.None)) {
 				this.setState(JsonParserState.InQuote);
-			}
-
-			else if (this.isQuote(currChar) && this.inState(JsonParserState.InQuote)) {
+			} else if (this.isQuote(currChar) && this.inState(JsonParserState.InQuote)) {
 				this.setState(JsonParserState.None);
 			}
 
-			if (!this.inComment())
-				chunk += currChar;
+			if (!this.inComment()) chunk += currChar;
 		}
 
 		return chunk;

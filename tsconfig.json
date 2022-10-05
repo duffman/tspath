@@ -1,20 +1,25 @@
 {
-  "compilerOptions": {
-    "target": "es6",
-    "module": "commonjs",
-    "outDir": "./dist",
-    "strict": false,
-    "baseUrl": "./",
-    "declaration": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
-  },
-  "include": [
-    "./",
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+	"compilerOptions": {
+		"target":                 "es6",
+		"module":                 "commonjs",
+		"outDir":                 "./lib",
+		"strict":                 false,
+		"baseUrl":                "./src",
+		"declaration":            true,
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata":  true
+	},
+	"tspath": {
+		"compactJs": true
+	},
+	"include":         [
+		"./",
+		"src/**/*"
+	],
+	"exclude": [
+		"hack",
+		"hack.*",
+		"node_modules",
+		"lib"
+	]
 }

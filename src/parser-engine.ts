@@ -22,31 +22,35 @@
 
 =----------------------------------------------------------------= */
 
-let fs             = require("fs");
-let path           = require('path');
-let esprima        = require("esprima");
-let escodegen      = require("escodegen");
-let chalk          = require("chalk");
+let fs = require("fs");
+let path = require("path");
+let esprima = require("esprima");
+let escodegen = require("escodegen");
+let chalk = require("chalk");
 
-import { Utils }                from "./utils";
-import { JsonCommentStripper }  from "./json-comment-stripper";
-import { ProjectOptions }       from "./project-options";
-import { TS_CONFIG }            from "./type-definitions";
-import { FILE_ENCODING }        from "./type-definitions";
+import { debugMode }           from "./tspath";
+import { PathUtils }           from "./utils/path.utils";
+import { Utils }               from "./utils/utils";
+import { JsonCommentStripper } from "./utils/json-comment-stripper";
+import { ProjectOptions } from "./project-options";
+import { TS_CONFIG }      from "./tspath.types";
+import { FILE_ENCODING }  from "./tspath.types";
 
-const log          = console.log;
+const log = console.log;
+const testRun = false;
 
 export class ParserEngine {
 	public projectPath: string;
 
-	nrFilesProcessed : number = 0;
-	nrPathsProcessed : number = 0;
-	appRoot          : string;
-	distRoot         : string;
-	compactMode      : boolean = true;
-	projectOptions   : ProjectOptions;
-	tsConfig         : any;
-	fileFilter       : Array<string>;
+	nrFilesProcessed: number = 0;
+	nrPathsProcessed: number = 0;
+	srcRoot: string;
+	basePath: string;
+	distRoot: string;
+	compactMode: boolean = true;
+	projectOptions: ProjectOptions;
+	tsConfig: any;
+	fileFilter: Array<string>;
 
 	constructor() {}
 
@@ -57,7 +61,7 @@ export class ParserEngine {
 
 	public setProjectPath(projectPath: string): boolean {
 		if (!Utils.isEmpty(projectPath) && !this.validateProjectPath(projectPath)) {
-			log(chalk.red.bold("Project Path \"" + chalk.underline(projectPath) + "\" is invalid!"));
+			log(chalk.red.bold('Project Path "' + chalk.underline(projectPath) + '" is invalid!'));
 			return false;
 		}
 
@@ -112,8 +116,8 @@ export class ParserEngine {
 	/**
 	 * Parse project and resolve paths
 	 */
-	public execute() {
-		const  PROCESS_TIME = "Operation finished in";
+	public execute(): void {
+		const PROCESS_TIME = "Operation finished in";
 		console.time(PROCESS_TIME);
 
 		if (!this.validateProjectPath(this.projectPath)) {
@@ -127,11 +131,30 @@ export class ParserEngine {
 		if (!Utils.isEmpty(projectName)) {
 			log(chalk.yellow("Parsing project: ") + chalk.bold(projectName) + " " + chalk.underline(this.projectPath));
 		} else {
-			log(chalk.yellow.bold("Parsing project at: ") + '"' +  this.projectPath + '"');
+			log(chalk.yellow.bold("Parsing project at: ") + '"' + this.projectPath + '"');
 		}
 
-		this.appRoot = path.resolve(this.projectPath, this.projectOptions.baseUrl);
 		this.distRoot = path.resolve(this.projectPath, this.projectOptions.outDir);
+		this.basePath = this.distRoot;
+
+		let tmpPath = path.resolve(this.distRoot, this.projectOptions.baseUrl);
+
+		//
+		// If the baseUrl exist in the dist folder, the TS Compiler have re-used the src structure
+		// in the dist folder in order to keep the structure intact, probably due to a require to
+		// a file located directly in the project root folder
+		//
+		if ((this.projectOptions.baseUrl !== this.projectOptions.outDir) && PathUtils.pathExist(tmpPath)) {
+			this.basePath = tmpPath;
+		}
+
+		if (debugMode) {
+			console.clear();
+			console.log("TMP :::", tmpPath);
+			console.log("Project path ::", this.projectPath);
+			console.log("Dist path ::", this.distRoot);
+			console.log("Src path ::", this.srcRoot);
+		}
 
 		let fileList = new Array<string>();
 
@@ -149,14 +172,23 @@ export class ParserEngine {
 		log(chalk.bold.green("Project is prepared, now run it normally!"));
 	}
 
+	private shouldSkipFile(filename: string): boolean {
+		const contents = fs.readFileSync(filename, FILE_ENCODING) as string;
+		return contents.includes("tspath:skip-file");
+	}
+
 	/**
 	 *
- 	 * @param sourceFilename
+	 * @param sourceFilename
 	 * @param jsRequire - require in javascript source "require("jsRequire")
 	 * @returns {string}
 	 */
 	getRelativePathForRequiredFile(sourceFilename: string, jsRequire: string) {
 		let options = this.projectOptions;
+
+		if (debugMode) {
+			console.log("getRelativePathForRequiredFile ::---", sourceFilename);
+		}
 
 		for (let alias in options.pathMappings) {
 			let mapping = options.pathMappings[alias];
@@ -167,17 +199,42 @@ export class ParserEngine {
 
 			// 2018-06-02: Workaround for bug with same prefix Aliases e.g @db and @dbCore
 			// Cut alias prefix for mapping comparison
-			let requirePrefix = jsRequire.substring(0, jsRequire.indexOf(path.sep))
+			let requirePrefix = jsRequire.substring(0, jsRequire.indexOf(path.sep));
 
 			if (requirePrefix == alias) {
 				let result = jsRequire.replace(alias, mapping);
 				Utils.replaceDoubleSlashes(result);
-				result = Utils.ensureTrailingPathDelimiter(result);
 
-				let absoluteJsRequire = path.join(this.distRoot, result);
+				let absoluteJsRequire = path.join(this.basePath, result);
+
+				if (!fs.existsSync(`${absoluteJsRequire}.js`)) {
+					const newResult = jsRequire.replace(alias, "");
+					absoluteJsRequire = path.join(this.basePath, newResult);
+				}
+
 				let sourceDir = path.dirname(sourceFilename);
 
-				let relativePath = path.relative(sourceDir, absoluteJsRequire);
+				if (debugMode) {
+					console.log("sourceDir == ", sourceDir);
+					console.log("absoluteJsRequire == ", absoluteJsRequire);
+					console.log("this.distRoot == ", this.distRoot);
+					console.log("sourceFilename == ", sourceFilename);
+				}
+
+				const fromPath = path.dirname(sourceFilename);
+				const toPath = path.dirname(absoluteJsRequire + ".js");
+
+				//let relativePath = PathUtils.getRelativePath(fromPath, toPath);
+
+				let relativePath = path.relative(fromPath, toPath);
+
+				if (!relativePath.trim().length) {
+					relativePath = ".";
+				}
+
+				relativePath = Utils.ensureTrailingPathDelimiter(relativePath);
+
+
 
 				/* If the path does not start with .. it´ not a sub directory
 				 * as in ../ or ..\ so assume it´ the same dir...
@@ -186,7 +243,7 @@ export class ParserEngine {
 					relativePath = "./" + relativePath;
 				}
 
-				jsRequire = relativePath;
+				jsRequire = relativePath + path.parse(absoluteJsRequire).base;
 				break;
 			}
 		}
@@ -209,7 +266,7 @@ export class ParserEngine {
 		 */
 		if (!Utils.isEmpty(requireInJsFile) && Utils.fileHavePath(requireInJsFile)) {
 			let relativePath = this.getRelativePathForRequiredFile(sourceFilename, requireInJsFile);
-			resultNode = {type: "Literal", value: relativePath, raw: relativePath};
+			resultNode = { type: "Literal", value: relativePath, raw: relativePath };
 
 			this.nrPathsProcessed++;
 		}
@@ -230,26 +287,26 @@ export class ParserEngine {
 
 		try {
 			ast = esprima.parse(inputSourceCode); //, { raw: true, tokens: true, range: true, comment: true });
-		}
-		catch(error) {
+		} catch (error) {
 			console.log("Unable to parse file:", filename);
 			console.log("Error:", error);
 			this.exit();
 		}
 
-		this.traverseSynTree(ast, this, function(node) {
+		this.traverseSynTree(ast, this, (node) => {
 			if (node != undefined && node.type == "CallExpression" && node.callee.name == "require") {
 				node.arguments[0] = scope.processJsRequire(node.arguments[0], filename);
 			}
 		});
 
-		let option = { comment: true, format: { compact: this.compactMode,  quotes: '"' }};
+		let option = { comment: true, format: { compact: this.compactMode, quotes: '"' } };
 		let finalSource = escodegen.generate(ast, option);
 
 		try {
-			this.saveFileContents(filename, finalSource);
-		}
-		catch(error) {
+			if (!testRun) {
+				this.saveFileContents(filename, finalSource);
+			}
+		} catch (error) {
 			log(chalk.bold.red("Unable to write file:"), filename);
 			this.exit();
 		}
@@ -260,12 +317,12 @@ export class ParserEngine {
 	 * @param filename
 	 * @param fileContents
 	 */
-	saveFileContents(filename: string, fileContents: string) {
+	public saveFileContents(filename: string, fileContents: string) {
 		let error: any = false;
 		fs.writeFileSync(filename, fileContents, FILE_ENCODING, error);
 
 		if (error) {
-			throw Error("Could not save file: " +  filename);
+			throw Error("Could not save file: " + filename);
 		}
 	}
 
@@ -280,8 +337,9 @@ export class ParserEngine {
 		let jsonCS = new JsonCommentStripper();
 		fileData = jsonCS.stripComments(fileData);
 
-		this.tsConfig = JSON.parse(fileData);
-
+		try {
+			this.tsConfig = JSON.parse(fileData);
+		} catch (e) {}
 		let compilerOpt = this.tsConfig.compilerOptions;
 
 		let reqFields = [];
@@ -300,20 +358,21 @@ export class ParserEngine {
 	}
 
 	/**
-	 *
+	 * Traverse parsed JavaScript
 	 * @param ast
 	 * @param scope
 	 * @param func
 	 */
-	traverseSynTree(ast, scope, func) {
+	private traverseSynTree(ast, scope, func): void {
 		func(ast);
 		for (let key in ast) {
 			if (ast.hasOwnProperty(key)) {
 				let child = ast[key];
 
-				if (typeof child === 'object' && child !== null) {
+				if (typeof child === "object" && child !== null) {
 					if (Array.isArray(child)) {
-						child.forEach(function(ast) { //5
+						child.forEach(function (ast) {
+							//5
 							scope.traverseSynTree(ast, scope, func);
 						});
 					} else {
@@ -343,7 +402,7 @@ export class ParserEngine {
 	 */
 	public walkSync(dir: string, filelist: Array<string>, fileExtension?: string) {
 		let scope = this;
-		let	files = fs.readdirSync(dir);
+		let files = fs.readdirSync(dir);
 		filelist = filelist || [];
 		fileExtension = fileExtension === undefined ? "" : fileExtension;
 
@@ -352,13 +411,14 @@ export class ParserEngine {
 
 			if (fs.statSync(path.join(dir, file)).isDirectory()) {
 				filelist = this.walkSync(path.join(dir, file), filelist, fileExtension);
-			}
-			else {
+			} else {
 				let tmpExt = path.extname(file);
 
-				if ((fileExtension.length > 0 && scope.matchExtension(fileExtension))
-					|| (fileExtension.length < 1)
-					|| (fileExtension == "*.*")) {
+				if (
+					(fileExtension.length > 0 && scope.matchExtension(fileExtension)) ||
+					fileExtension.length < 1 ||
+					fileExtension == "*.*"
+				) {
 					let fullFilename = path.join(dir, file);
 					filelist.push(fullFilename);
 				}

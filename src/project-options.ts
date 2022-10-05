@@ -22,24 +22,28 @@
 
  =----------------------------------------------------------------= */
 
-import { ISettings, ITSConfig, IPaths } from "./type-definitions";
+import { ISettings } from "./tspath.types";
+import { ITSConfig } from "./tspath.types";
+import { IPaths }    from "./tspath.types";
 
 export class ProjectOptions {
 	public outDir: string;
 	public baseUrl: string;
+	public removeComments: boolean;
 	public pathMappings: ISettings;
 
 	//TODO: Support fallbacks
-	processMappings(mappings: IPaths) {
-		for (var alias in mappings) {
-			this.pathMappings[alias] = mappings[alias][0]; // No support for fallbacks yet...
+	private processMappings(mappings: IPaths) {
+		for (const alias in mappings) {
+			this.pathMappings[ alias ] = mappings[ alias ][ 0 ]; // No support for fallbacks yet...
 		}
 	}
 
 	constructor(tsconfigObj: ITSConfig) {
-		this.pathMappings = {};
-		this.outDir = tsconfigObj.outDir;
-		this.baseUrl = tsconfigObj.baseUrl;
+		this.pathMappings   = {};
+		this.outDir         = tsconfigObj.outDir;
+		this.baseUrl        = tsconfigObj.baseUrl;
+		this.removeComments = tsconfigObj.removeComments;
 		this.processMappings(tsconfigObj.paths);
 	}
 }

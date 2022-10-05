@@ -1,0 +1,5 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="tspath.js" type="NodeJSConfigurationType" application-parameters="-f" nameIsGenerated="true" path-to-js-file="lib/tspath.js" working-dir="$PROJECT_DIR$">
+    <method v="2" />
+  </configuration>
+</component>

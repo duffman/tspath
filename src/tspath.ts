@@ -24,30 +24,29 @@
 
  =----------------------------------------------------------------= */
 
-const pkg      = require('../package.json');
-let fs         = require("fs");
-let path       = require("path");
-let chalk      = require("chalk");
-let log        = console.log;
-let Confirm    = require('prompt-confirm');
-let yargs      = require("yargs").argv;
+let chalk = require("chalk");
+let log = console.log;
+let Confirm = require("prompt-confirm");
+let yargs = require("yargs").argv;
 
 import { ParserEngine }     from "./parser-engine";
-import { ParentFileFinder } from "./parent-file-finder";
-import { TS_CONFIG }        from "./type-definitions";
-
+import { JsonFile }         from "./utils/json-file";
+import { ParentFileFinder } from "./utils/parent-file-finder";
+import { TS_CONFIG }        from "./tspath.types";
 
 export class TSPath {
 	private engine = new ParserEngine();
 
 	constructor() {
-		log(chalk.yellow("TSPath " + pkg.version));
+		const pkg: any = new JsonFile("package.json");
+
+		log(chalk.yellow(`TSPath v${ pkg.version ?? 2 }`));
 		let args = process.argv.slice(2);
 		let param = args[0];
 		let filter = ["js"];
-		let force: boolean = (yargs.force || yargs.f);
+		let force: boolean = yargs.force || yargs.f;
 		let projectPath = process.cwd();
-		let compactOutput = yargs.preserve ? false : true;
+		let compactOutput = !yargs.preserve;
 		let findResult = ParentFileFinder.findFile(projectPath, TS_CONFIG);
 
 		let scope = this;
@@ -69,15 +68,12 @@ export class TSPath {
 
 		if (force && findResult.fileFound) {
 			scope.processPath(findResult.path);
-
 		} else if (findResult.fileFound) {
-			let confirm = new Confirm("Process project at: <"  + findResult.path +  "> ?")
-				.ask(function(answer) {
-					if (answer) {
-						scope.processPath(findResult.path);
-					}
-				});
-
+			let confirm = new Confirm("Process project at: <" + findResult.path + "> ?").ask(function (answer) {
+				if (answer) {
+					scope.processPath(findResult.path);
+				}
+			});
 		} else {
 			log(chalk.bold("No project root found!"));
 		}
@@ -90,4 +86,6 @@ export class TSPath {
 	}
 }
 
-let tspath = new TSPath();
+export const debugMode = false;
+
+new TSPath();

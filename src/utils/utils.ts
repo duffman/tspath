@@ -33,8 +33,7 @@ export class Utils {
 	public static safeGetAstNodeValue(node: any): string {
 		if (Utils.isEmpty(node) || Utils.isEmpty(node.value)) {
 			return "";
-		}
-		else {
+		} else {
 			return node.value;
 		}
 	}
@@ -69,7 +68,7 @@ export class Utils {
 		path += part;
 
 		if (trailingDelim) {
-			Utils.ensureTrailingPathDelimiter(path)
+			Utils.ensureTrailingPathDelimiter(path);
 		}
 	}
 
@@ -79,7 +78,7 @@ export class Utils {
 	 * @returns {boolean}
 	 */
 	public static isEmpty(input): boolean {
-		return (input === undefined || input === null || input === '');
+		return input === undefined || input === null || input === "";
 	}
 
 	/**
@@ -89,7 +88,7 @@ export class Utils {
 	 */
 	public static stripWildcard(path: string): string {
 		if (path.endsWith("/*")) {
-			path = path.substr(0, path.length-2);
+			path = path.substr(0, path.length - 2);
 		}
 
 		return path;
@@ -106,8 +105,8 @@ export class Utils {
 	 * Converts EFBBBF (UTF-8 BOM) to FEFF (UTF-16 BOM)
 	 * @param data
 	 */
-	public static stripByteOrderMark(data: string) {
-		if (data.charCodeAt(0) === 0xFEFF) {
+	public static stripByteOrderMark(data: string): string {
+		if (data.charCodeAt(0) === 0xfeff) {
 			data = data.slice(1);
 		}
 
@@ -120,6 +119,6 @@ export class Utils {
 	 * @returns {boolean}
 	 */
 	public static fileHavePath(filename: string): boolean {
-		return (filename !== path.basename(filename));
+		return filename !== path.basename(filename);
 	}
 }

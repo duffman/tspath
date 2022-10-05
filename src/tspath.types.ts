@@ -22,8 +22,8 @@
 
  =----------------------------------------------------------------= */
 
-export const FILE_ENCODING     = "UTF-8";
-export const TS_CONFIG         = "tsconfig.json";
+export const FILE_ENCODING = "UTF-8";
+export const TS_CONFIG = "tsconfig.json";
 
 export interface ISettings {
 	[key: string]: string;
@@ -32,6 +32,7 @@ export interface ISettings {
 export interface ITSConfig {
 	outDir: string;
 	baseUrl: string;
+	removeComments: boolean;
 	paths: IPaths;
 }
 

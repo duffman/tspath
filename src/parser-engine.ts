@@ -390,7 +390,8 @@ export class ParserEngine {
 	 */
 	private matchExtension(fileExtension: string): boolean {
 		if (Utils.isEmpty(fileExtension) || this.fileFilter.length == 0) return false;
-		return this.fileFilter.indexOf(fileExtension) > -1;
+		const matchesFilter = this.fileFilter.find(f => fileExtension.endsWith(f)) !== undefined;
+		return matchesFilter;
 	}
 
 	/**
@@ -406,19 +407,13 @@ export class ParserEngine {
 		filelist = filelist || [];
 		fileExtension = fileExtension === undefined ? "" : fileExtension;
 
-		for (let i = 0; i < files.length; i++) {
-			let file = files[i];
-
+		for (let file of files) {
 			if (fs.statSync(path.join(dir, file)).isDirectory()) {
 				filelist = this.walkSync(path.join(dir, file), filelist, fileExtension);
 			} else {
 				let tmpExt = path.extname(file);
 
-				if (
-					(fileExtension.length > 0 && scope.matchExtension(fileExtension)) ||
-					fileExtension.length < 1 ||
-					fileExtension == "*.*"
-				) {
+				if (scope.matchExtension(tmpExt)) {
 					let fullFilename = path.join(dir, file);
 					filelist.push(fullFilename);
 				}

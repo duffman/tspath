@@ -1,21 +1,21 @@
 {
-	"name": "tspath",
-	"version": "2.1.0",
-	"description": "TypeScript Path Igniter resolves @paths specified in tsconfig",
-	"license": "LGPL-2.1",
-	"scripts": {
-		"copy": "copyfiles package.json lib",
-		"make": "",
+	"name":            "tspath",
+	"version":         "2.1.0",
+	"description":     "TypeScript Path Igniter resolves @paths specified in tsconfig",
+	"license":         "LGPL-2.1",
+	"scripts":         {
+		"copy":   "copyfiles package.json lib",
+		"make":   "",
 		"format": "prettier --write './*.{js,ts,tsx,json}' 'src/**/*.{js,ts,tsx,json}'",
-		"build": "tsc",
-		"test": "mocha -r ts-node/register test/**.*/*_spec.ts",
+		"build":  "tsc",
+		"test":   "mocha -r ts-node/register test/**.*/*_spec.ts",
 		"tspath": "node ./dist/tspath.js"
 	},
-	"preferGlobal": true,
-	"bin": {
+	"preferGlobal":    true,
+	"bin":             {
 		"tspath": "./dist/tspath.js"
 	},
-	"keywords": [
+	"keywords":        [
 		"tspath",
 		"relative",
 		"path",
@@ -24,26 +24,26 @@
 		"resolve",
 		"alias"
 	],
-	"author": "Patrik Forsberg <patrik.forsberg@coldmind.com>",
-	"repository": {
+	"author":          "Patrik Forsberg <patrik.forsberg@coldmind.com>",
+	"repository":      {
 		"type": "git",
-		"url": "git+https://github.com/duffman/tspath.git"
+		"url":  "git+https://github.com/duffman/tspath.git"
 	},
 	"devDependencies": {
-		"@types/chai": "^4.0.4",
+		"@types/chai":  "^4.0.4",
 		"@types/mocha": "^2.2.42",
-		"@types/node": "^8.0.25",
-		"chai": "^4.1.2",
-		"copyfiles": "^2.4.1",
-		"mocha": "^3.5.0",
-		"prettier": "^2.7.1"
+		"@types/node":  "^8.0.25",
+		"chai":         "^4.1.2",
+		"copyfiles":    "^2.4.1",
+		"mocha":        "^3.5.0",
+		"prettier":     "^2.7.1"
 	},
-	"dependencies": {
-		"chalk": "^2.3.0",
-		"escodegen": "^1.8.1",
-		"esprima": "^4.0.0",
+	"dependencies":    {
+		"chalk":          "^2.3.0",
+		"escodegen":      "^1.8.1",
+		"esprima":        "^4.0.0",
 		"prompt-confirm": "^1.2.0",
-		"typescript": "^4.4.2",
-		"yargs": "^11.0.0"
+		"typescript":     "^4.4.2",
+		"yargs":          "^11.0.0"
 	}
 }

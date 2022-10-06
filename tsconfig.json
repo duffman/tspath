@@ -9,14 +9,14 @@
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata":  true
 	},
-	"tspath": {
+	"tspath":          {
 		"compactJs": true
 	},
 	"include":         [
 		"./",
 		"src/**/*"
 	],
-	"exclude": [
+	"exclude":         [
 		"hack",
 		"hack.*",
 		"node_modules",

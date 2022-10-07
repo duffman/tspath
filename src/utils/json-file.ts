@@ -25,24 +25,12 @@
 
  =----------------------------------------------------------------= */
 
-import * as fs           from "fs";
-import { FILE_ENCODING } from "../tspath.types";
-import { Logger }        from "./logger";
+import * as fs    from "fs";
+import { Const }  from "../tspath.const";
+import { Logger } from "./logger";
 
 export interface IJsonFile {
 	rawData: any;
-	name?: string;
-	version?: string;
-	description?: string;
-	license?: string;
-	scripts?: any;
-	preferGlobal?: boolean;
-	bin?: any;
-	keywords?: string[];
-	author?: string;
-	repository?: any;
-	dependencies?: any;
-	devDependencies?: any;
 }
 
 export class JsonFile implements IJsonFile {
@@ -50,7 +38,7 @@ export class JsonFile implements IJsonFile {
 
 	constructor(filename: string) {
 		try {
-			const jsonStr = fs.readFileSync(filename, FILE_ENCODING) as string;
+			const jsonStr = fs.readFileSync(filename, Const.FILE_ENCODING) as string;
 			this.rawData = JSON.parse(jsonStr);
 			Object.assign(this, this.rawData);
 		} catch (e) {

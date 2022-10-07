@@ -30,9 +30,9 @@ let Confirm = require("prompt-confirm");
 let yargs = require("yargs").argv;
 
 import { ParserEngine }     from "./parser-engine";
+import { Const }            from "./tspath.const";
 import { JsonFile }         from "./utils/json-file";
 import { ParentFileFinder } from "./utils/parent-file-finder";
-import { TS_CONFIG }        from "./tspath.types";
 
 export class TSPath {
 	private engine = new ParserEngine();
@@ -40,14 +40,12 @@ export class TSPath {
 	constructor() {
 		const pkg: any = new JsonFile("package.json");
 
-		log(chalk.yellow(`TSPath v${ pkg.version ?? 2 }`));
-		let args = process.argv.slice(2);
-		let param = args[0];
+		log(chalk.yellow(`TSPath v${ Const.VERSION }`));
 		let filter = ["js"];
 		let force: boolean = yargs.force || yargs.f;
 		let projectPath = process.cwd();
 		let compactOutput = !yargs.preserve;
-		let findResult = ParentFileFinder.findFile(projectPath, TS_CONFIG);
+		let findResult = ParentFileFinder.findFile(projectPath, Const.TS_CONFIG);
 
 		let scope = this;
 
@@ -85,7 +83,5 @@ export class TSPath {
 		}
 	}
 }
-
-export const debugMode = false;
 
 new TSPath();

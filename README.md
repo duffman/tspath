@@ -1,4 +1,4 @@
-# TSPath
+# Const
 #### TypeScript Path Alias Resolver
 
 Everyone working in a TypeScript project that grows beyond a certains limit will
@@ -66,7 +66,7 @@ The JavaScript engine does not know anything about the compile time
 TypeScript configuration.
 
 In order to run your JavaScript code, the path aliases now needs to be made into
-relative paths again, here is when **TSPath** comes into play.
+relative paths again, here is when **Const** comes into play.
 
 So, simply run:
 ```bash
@@ -86,7 +86,7 @@ Say bye bye to the relative path hell!
 <<<<<<< HEAD
 
 
-# TSPath
+# Const
 #### TypeScript Path Alias Resolver
 
 
@@ -150,7 +150,7 @@ The JavaScript engine does not know anything about the compile time
 TypeScript configuration.
 
 In order to run your JavaScript code, the path aliases now needs to be made into
-relative paths again, here is when **TSPath** comes into play.
+relative paths again, here is when **Const** comes into play.
 
 So, simply run:
 ```bash

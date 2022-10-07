@@ -30,20 +30,23 @@
 
  =---------------------------------------------------------------= */
 
-import * as fs       from "fs";
-import * as path     from "path";
-import { Utils }     from "./utils";
-import { TS_CONFIG } from "../tspath.types";
+import * as fs   from "fs";
+import * as path from "path";
+import { Const } from "../tspath.const";
+import { Utils } from "./utils";
 
 export class FileFindResult {
 	constructor(public fileFound: boolean = false, public path: string = "", public result: string = "") {
 	}
 }
 
+/**
+ * File finder which traverses parent directories
+ * until a given filename is found.
+ */
 export class ParentFileFinder {
 	/**
-	 * File finder which traverses parent directories
-	 * until a given filename is found.
+	 * Find file
 	 * @param startPath
 	 * @param filename
 	 * @returns {FileFindResult}
@@ -63,7 +66,7 @@ export class ParentFileFinder {
 
 		for (let i = parts.length - 1; i > 0; i--) {
 			tmpStr   = parts[ i ];
-			filename = path.resolve(tmpStr, TS_CONFIG);
+			filename = path.resolve(tmpStr, filename);
 
 			if (fs.existsSync(filename)) {
 				result.fileFound = true;

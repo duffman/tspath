@@ -40,12 +40,22 @@ export class Logger {
 		}
 	}
 
-	public static logRed(logMessage: string, logData: any = null): void {
-		if (logData) {
-			log(chalk.redBright(logMessage), logData);
-		} else {
-			log(chalk.redBright(logMessage));
+	public static logBase(colorFunc: (data: any) => string, logMessage: string, ...logData:any[]): void {
+		let dataArr = new Array<string>();
+
+		for (let obj in logData) {
+			let str = obj as string;
+			if (typeof obj === "object") {
+				str = JSON.stringify(obj);
+			}
+			dataArr.push(str);
 		}
+
+		log(colorFunc(logMessage), colorFunc(dataArr.join(" ::: ") ));
+	}
+
+	public static logRed(logMessage: string, ...logData:any[]): void {
+		Logger.logBase(chalk.redBright, logMessage, logData);
 	}
 
 	public static logYellow(logMessage: string, logData: any = ""): void {

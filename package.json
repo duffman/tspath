@@ -1,19 +1,15 @@
 {
-	"name":            "tspath",
-	"version":         "2.1.0",
-	"description":     "TypeScript Path Igniter resolves @paths specified in tsconfig",
+	"name":            "ts-igniter",
+	"version":         "1.1.0",
+	"description":     "The swiss army knife for TypeScript developers, resolves @paths specified in tsconfig, export types from folder",
 	"license":         "LGPL-2.1",
 	"scripts":         {
 		"copy":   "copyfiles package.json lib",
-		"make":   "",
-		"format": "prettier --write './*.{js,ts,tsx,json}' 'src/**/*.{js,ts,tsx,json}'",
-		"build":  "tsc",
-		"test":   "mocha -r ts-node/register test/**.*/*_spec.ts",
-		"tspath": "node ./dist/tspath.js"
+		"tspath": "node ./lib/tspath.js"
 	},
 	"preferGlobal":    true,
 	"bin":             {
-		"tspath": "./dist/tspath.js"
+		"tspath": "./lib/tspath.js"
 	},
 	"keywords":        [
 		"tspath",

@@ -25,14 +25,13 @@ export class PathUtils {
 	 * @returns {string}
 	 */
 	public static getRelativePath(fromPath: string, toPath: string, dotSlashForSamePath = true): string {
-		let relativePath = path.relative(fromPath, toPath);
+		let relativePath: string = path.relative(fromPath, toPath);
 
 		if (!relativePath.trim().length && dotSlashForSamePath) {
 			relativePath = ".";
 		}
 
-		return Utils.ensureTrailingPathDelimiter(relativePath);
+		relativePath = Utils.ensureTrailingPathDelimiter(relativePath);
+		return relativePath;
 	}
-
 }
-

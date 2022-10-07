@@ -80,16 +80,16 @@ export class JsonCommentStripper {
 	}
 
 	parse(data: string): string {
-		var lineNum = 1;
-		var linePos = 1;
+		let lineNum = 1;
+		let linePos = 1;
 
-		var prevChar = "";
-		var currChar = "";
-		var aheadChar = "";
+		let prevChar = "";
+		let currChar = "";
+		let aheadChar = "";
 
-		var chunk = "";
+		let chunk = "";
 
-		for (var i = 0; i < data.length; i++) {
+		for (let i = 0; i < data.length; i++) {
 			prevChar = currChar;
 			currChar = data[i];
 			aheadChar = data[i + 1];

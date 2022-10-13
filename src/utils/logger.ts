@@ -43,7 +43,7 @@ export class Logger {
 	public static logBase(colorFunc: (data: any) => string, logMessage: string, ...logData:any[]): void {
 		let dataArr = new Array<string>();
 
-		for (let obj in logData) {
+		for (let obj of logData) {
 			let str = obj as string;
 			if (typeof obj === "object") {
 				str = JSON.stringify(obj);

@@ -1,6 +1,11 @@
-# Const
+# TSPath
 #### TypeScript Path Alias Resolver
 
+## Important update  
+The issues with the **basePath** relative to the **outDir** have now been 
+corrected... until someone says something else ;) 
+
+### So what is it?
 Everyone working in a TypeScript project that grows beyond a certains limit will
 eventually experience the situation commonly described as **path hell**, the snippet
 below is an example of such hell.

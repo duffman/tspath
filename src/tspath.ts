@@ -42,12 +42,11 @@ export class TSPath {
 
 		log(chalk.yellow(`TSPath v${ Const.VERSION }`));
 		let filter = ["js"];
-		let force: boolean = yargs.force || yargs.f;
+		const force: boolean = yargs.force || yargs.f;
+		const verbose: boolean = yargs.verbose || yargs.v;
 		let projectPath = process.cwd();
 		let compactOutput = !yargs.preserve;
 		let findResult = ParentFileFinder.findFile(projectPath, Const.TS_CONFIG);
-
-		let scope = this;
 
 		if (yargs.ext || yargs.filter) {
 			let argFilter = yargs.ext ? yargs.ext : yargs.filter;
@@ -65,11 +64,11 @@ export class TSPath {
 		this.engine.setFileFilter(filter);
 
 		if (force && findResult.fileFound) {
-			scope.processPath(findResult.path);
+			this.processPath(findResult.path);
 		} else if (findResult.fileFound) {
-			let confirm = new Confirm("Process project at: <" + findResult.path + "> ?").ask(function (answer) {
+			let confirm = new Confirm("Process project at: <" + findResult.path + "> ?").ask(answer => {
 				if (answer) {
-					scope.processPath(findResult.path);
+					this.processPath(findResult.path);
 				}
 			});
 		} else {

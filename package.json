@@ -1,15 +1,16 @@
 {
-	"name":            "ts-igniter",
-	"version":         "1.1.0",
-	"description":     "The swiss army knife for TypeScript developers, resolves @paths specified in tsconfig, export types from folder",
+	"name":            "tspath",
+	"version":         "2.5.4",
+	"description":     "TypeScript path alias resolver, re-writes JS files with relative paths according to @paths specified in tsconfig",
 	"license":         "LGPL-2.1",
 	"scripts":         {
 		"copy":   "copyfiles package.json lib",
-		"tspath": "node ./lib/tspath.js"
+		"tspath": "node ./tspath.js"
 	},
 	"preferGlobal":    true,
+	"main": "index.js",
 	"bin":             {
-		"tspath": "./lib/tspath.js"
+		"tspath": "./tspath.js"
 	},
 	"keywords":        [
 		"tspath",

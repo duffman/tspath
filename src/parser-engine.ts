@@ -151,7 +151,7 @@ export class ParserEngine {
 		}
 
 		if (Const.DEBUG_MODE) {
-			console.clear();
+			//console.clear();
 			console.log("TMP :::", tmpPath);
 			console.log("Project path ::", this.projectPath);
 			console.log("Dist path ::", this.distRoot);
@@ -186,10 +186,11 @@ export class ParserEngine {
 	 * @returns {string}
 	 */
 	getRelativePathForRequiredFile(sourceFilename: string, jsRequire: string) {
+		console.log("FIRST :: jsRequire ::", jsRequire);
 		let options = this.projectOptions;
 
 		if (Const.DEBUG_MODE) {
-			console.log("getRelativePathForRequiredFile ::---", sourceFilename);
+			//console.log("getRelativePathForRequiredFile ::---", sourceFilename);
 		}
 
 		for (let alias in options.pathMappings) {
@@ -203,30 +204,49 @@ export class ParserEngine {
 			// Cut alias prefix for mapping comparison
 			let requirePrefix = jsRequire.substring(0, jsRequire.indexOf(path.sep));
 
-			if (requirePrefix == alias) {
+			if (requirePrefix === alias) {
+				console.log("jsRequire ::", jsRequire);
+				console.log("requirePrefix ::", requirePrefix);
+				console.log("alias ::", alias);
+				console.log("---");
+
 				let result = jsRequire.replace(alias, mapping);
 				Utils.replaceDoubleSlashes(result);
 
 				let absoluteJsRequire = path.join(this.basePath, result);
+				console.log("Absolute PATH require ::", absoluteJsRequire);
 
+
+				/*
 				if (!fs.existsSync(`${ absoluteJsRequire }.js`)) {
 					const newResult   = jsRequire.replace(alias, "");
 					absoluteJsRequire = path.join(this.basePath, newResult);
 				}
-
+				*/
 				let sourceDir = path.dirname(sourceFilename);
 
-				if (Const.DEBUG_MODE) {
+				if (Const.DEBUG_MODE || absoluteJsRequire.indexOf("sql") > -1) {
+					console.log("this.distRoot == ", this.distRoot);
 					console.log("sourceDir == ", sourceDir);
 					console.log("absoluteJsRequire == ", absoluteJsRequire);
-					console.log("this.distRoot == ", this.distRoot);
 					console.log("sourceFilename == ", sourceFilename);
 				}
 
-				const fromPath = path.dirname(sourceFilename);
-				const toPath   = path.dirname(absoluteJsRequire + ".js");
+				let fromPath = path.dirname(sourceFilename);
+			//	fromPath = Utils.ensureTrailingPathDelimiter(fromPath)
 
-				let relativePath = PathUtils.getRelativePath(fromPath, toPath);
+				let toPath   = path.dirname(absoluteJsRequire);
+
+///				let relativePath = PathUtils.getRelativePath(fromPath, toPath, true);
+
+				let relativePath = path.relative(fromPath, toPath);
+
+				console.log("Relative PATH ::", relativePath);
+
+				if (!relativePath.trim().length) {
+					relativePath = ".";
+				}
+
 
 				/*
 				let relativePath = path.relative(fromPath, toPath);
@@ -238,6 +258,8 @@ export class ParserEngine {
 				relativePath = Utils.ensureTrailingPathDelimiter(relativePath);
 				*/
 
+				relativePath = Utils.ensureTrailingPathDelimiter(relativePath);
+
 				//
 				// If the path does not start with .. it´ not a sub directory
 				// as in ../ or ..\ so assume it´ the same dir...
@@ -246,7 +268,13 @@ export class ParserEngine {
 					relativePath = "./" + relativePath;
 				}
 
+
+				console.log("BEFORE >>>>>>>>>>>>>>> ::", absoluteJsRequire);
+
 				jsRequire = relativePath + path.parse(absoluteJsRequire).base;
+
+				console.log("AFTER >>>>>>>>>>>>>>> ::", jsRequire);
+
 				break;
 			}
 		}
@@ -286,14 +314,20 @@ export class ParserEngine {
 		this.nrFilesProcessed++;
 
 		let scope           = this;
-		let inputSourceCode = fs.readFileSync(filename, Const.FILE_ENCODING);
+		let inputSourceCode = fs.readFileSync(filename, "utf-8");
 		let ast             = null;
 
+
 		try {
-			ast = esprima.parse(inputSourceCode); //, { raw: true, tokens: true, range: true, comment: true });
+			ast = esprima.parse(inputSourceCode, { raw: true, tokens: true, range: true, comment: true });
 		}
 		catch (error) {
 			Logger.logRed("Unable to parse file:", filename);
+
+			console.log("INPUT ::",
+						inputSourceCode
+						);
+
 			Logger.log("Error:", error);
 			this.exit();
 		}
@@ -304,7 +338,7 @@ export class ParserEngine {
 			}
 		});
 
-		let option      = { comment: true, format: { compact: this.compactMode, quotes: "\"" } };
+		let option      = { comment: true, format: { compact: this.compactMode, quotes: `"`} };
 		let finalSource = escodegen.generate(ast, option);
 
 		try {
@@ -313,7 +347,7 @@ export class ParserEngine {
 			}
 		}
 		catch (error) {
-			log(chalk.bold.red("Unable to write file:"), filename);
+			Logger.logRed(`Unable to write file: "${filename}"`);
 			this.exit();
 		}
 	}

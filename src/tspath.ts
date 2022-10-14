@@ -33,6 +33,7 @@ import { ParserEngine }     from "./parser-engine";
 import { Const }            from "./tspath.const";
 import { JsonFile }         from "./utils/json-file";
 import { ParentFileFinder } from "./utils/parent-file-finder";
+import { existsSync } from "fs";
 
 export class TSPath {
 	private engine = new ParserEngine();
@@ -44,9 +45,14 @@ export class TSPath {
 		let filter = ["js"];
 		const force: boolean = yargs.force || yargs.f;
 		const verbose: boolean = yargs.verbose || yargs.v;
-		let projectPath = process.cwd();
+		let projectPath = yargs.projectPath ?? process.cwd();
 		let compactOutput = !yargs.preserve;
 		let findResult = ParentFileFinder.findFile(projectPath, Const.TS_CONFIG);
+
+		if (yargs.projectPath && !existsSync(yargs.projectPath)) {
+			log(chalk.bold(`Project path "${yargs.projectPath}" was root found!`));
+			process.exit(666);
+		}
 
 		if (yargs.ext || yargs.filter) {
 			let argFilter = yargs.ext ? yargs.ext : yargs.filter;

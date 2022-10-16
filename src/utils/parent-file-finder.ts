@@ -60,18 +60,18 @@ export class ParentFileFinder {
 
 		for (let i = 0; i < parts.length; i++) {
 			tmpStr     = path.resolve(tmpStr, parts[ i ]);
-			tmpStr     = Utils.ensureTrailingPathDelimiter(tmpStr);
+			tmpStr     = Utils.ensureSlash(tmpStr);
 			parts[ i ] = tmpStr;
 		}
 
 		for (let i = parts.length - 1; i > 0; i--) {
 			tmpStr   = parts[ i ];
-			filename = path.resolve(tmpStr, filename);
+			const tmpFilename = path.resolve(tmpStr, filename);
 
-			if (fs.existsSync(filename)) {
+			if (fs.existsSync(tmpFilename)) {
 				result.fileFound = true;
 				result.path      = tmpStr;
-				result.result    = filename;
+				result.result    = tmpFilename;
 				break;
 			}
 		}

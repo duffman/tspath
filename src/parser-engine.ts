@@ -59,7 +59,11 @@ export class ParserEngine {
 		process.exit(code);
 	}
 
-
+	/**
+	 * Assign project path
+	 * @param {string} projectPath
+	 * @returns {boolean}
+	 */
 	public setProjectPath(projectPath: string): boolean {
 		if (!Utils.isEmpty(projectPath) && !this.validateProjectPath(projectPath)) {
 			log(chalk.red.bold("Project Path \"" + chalk.underline(projectPath) + "\" is invalid!"));
@@ -84,7 +88,7 @@ export class ParserEngine {
 	private validateProjectPath(projectPath: string): boolean {
 		let result = true;
 
-		let configFile = Utils.ensureTrailingPathDelimiter(projectPath);
+		let configFile = Utils.ensureSlash(projectPath);
 		configFile += Const.TS_CONFIG;
 
 		if (!fs.existsSync(projectPath)) {
@@ -162,8 +166,10 @@ export class ParserEngine {
 
 		this.walkSync(this.distRoot, fileList, ".js");
 
+
 		for (let i = 0; i < fileList.length; i++) {
 			let filename = fileList[ i ];
+			process.stdout.write(`Processing file "${filename}"...\r`);
 			this.processFile(filename);
 		}
 
@@ -258,7 +264,7 @@ export class ParserEngine {
 				relativePath = Utils.ensureTrailingPathDelimiter(relativePath);
 				*/
 
-				relativePath = Utils.ensureTrailingPathDelimiter(relativePath);
+				relativePath = Utils.ensureSlash(relativePath);
 
 				//
 				// If the path does not start with .. it´ not a sub directory
@@ -300,7 +306,8 @@ export class ParserEngine {
 			let relativePath = this.getRelativePathForRequiredFile(sourceFilename, requireInJsFile);
 			resultNode       = { type: "Literal", value: relativePath, raw: relativePath };
 
-			this.nrPathsProcessed++;
+			if (relativePath && relativePath.length)
+				this.nrPathsProcessed++;
 		}
 
 		return resultNode;
@@ -312,6 +319,7 @@ export class ParserEngine {
 	 */
 	processFile(filename: string) {
 		this.nrFilesProcessed++;
+
 
 		let scope           = this;
 		let inputSourceCode = fs.readFileSync(filename, "utf-8");

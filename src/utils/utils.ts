@@ -45,7 +45,7 @@ export class Utils {
 	 * @param searchPath
 	 * @returns {string}
 	 */
-	public static ensureTrailingPathDelimiter(searchPath: string) {
+	public static ensureSlash(searchPath: string) {
 		if (Utils.isEmpty(searchPath)) {
 			return;
 		}
@@ -64,11 +64,11 @@ export class Utils {
 	 * @param trailingDelim
 	 */
 	public static appendToPath(path: string, part: string, trailingDelim: boolean = true) {
-		Utils.ensureTrailingPathDelimiter(path);
+		Utils.ensureSlash(path);
 		path += part;
 
 		if (trailingDelim) {
-			Utils.ensureTrailingPathDelimiter(path);
+			Utils.ensureSlash(path);
 		}
 	}
 

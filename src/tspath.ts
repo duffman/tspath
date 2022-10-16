@@ -35,6 +35,27 @@ import { JsonFile }         from "./utils/json-file";
 import { ParentFileFinder } from "./utils/parent-file-finder";
 import { existsSync } from "fs";
 
+export enum jsTarget {
+	ES2015 = "ES2015",
+	ES2016 = "ES2016",
+	ES2017 = "ES2017",
+	ES2018 = "ES2018",
+	ES2019 = "ES2019",
+	ES2020 = "ES2020",
+	ES3 = "ES3",
+	ES5 = "ES5",
+	ES6 = "ES6",
+}
+
+export interface ITSPathSettings {
+	force: boolean,
+	verbose: boolean,
+	projectPath: string,
+	compactOutput: boolean,
+	preserveComments: boolean,
+	targetJSVersion: jsTarget
+}
+
 export class TSPath {
 	private engine = new ParserEngine();
 

@@ -24,15 +24,15 @@
 
  =----------------------------------------------------------------= */
 
-let chalk = require("chalk");
-let log = console.log;
-let Confirm = require("prompt-confirm");
-let yargs = require("yargs").argv;
+const log = console.log;
+const Confirm = require("prompt-confirm");
+const yargs = require("yargs").argv;
 
-import { ParserEngine }     from "./parser-engine";
-import { Const }            from "./tspath.const";
-import { JsonFile }         from "./utils/json-file";
-import { ParentFileFinder } from "./utils/parent-file-finder";
+import { bold, red, yellow } from "./utils/color";
+import { ParserEngine }      from "./parser-engine";
+import { Const }             from "./tspath.const";
+import { JsonFile }          from "./utils/json-file";
+import { ParentFileFinder }  from "./utils/parent-file-finder";
 
 export class TSPath {
 	private engine = new ParserEngine();
@@ -40,7 +40,7 @@ export class TSPath {
 	constructor() {
 		const pkg: any = new JsonFile("package.json");
 
-		log(chalk.yellow(`TSPath v${ Const.VERSION }`));
+		log(yellow(`TSPath v${ Const.VERSION }`));
 		let filter = ["js"];
 		const force: boolean = yargs.force || yargs.f;
 		const verbose: boolean = yargs.verbose || yargs.v;
@@ -56,7 +56,7 @@ export class TSPath {
 		}
 
 		if (filter.length === 0) {
-			log(chalk.bold.red("File filter missing!"));
+			log(bold(red("File filter missing!")));
 			process.exit(23);
 		}
 
@@ -72,7 +72,7 @@ export class TSPath {
 				}
 			});
 		} else {
-			log(chalk.bold("No project root found!"));
+			log(bold("No project root found!"));
 		}
 	}
 

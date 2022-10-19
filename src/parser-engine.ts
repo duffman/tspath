@@ -22,18 +22,20 @@
 
  =----------------------------------------------------------------= */
 
-let esprima   = require("esprima");
-let escodegen = require("escodegen");
-let chalk     = require("chalk");
+import * as escodegen from "escodegen";
 
-import { Const }               from "./tspath.const";
-import { Logger }              from "./utils/logger";
-import { PathUtils }           from "./utils/path.utils";
-import { Utils }               from "./utils/utils";
-import { JsonCommentStripper } from "./utils/json-comment-stripper";
-import { ProjectOptions }      from "./project-options";
-import * as fs                 from "fs";
-import * as path               from "path";
+import esprima from "esprima-next";
+import { Const }               		from "./tspath.const";
+import { Logger }              		from "./utils/logger";
+import { PathUtils }           		from "./utils/path.utils";
+import { Utils }               		from "./utils/utils";
+import { JsonCommentStripper } 		from "./utils/json-comment-stripper";
+import { ProjectOptions }      		from "./project-options";
+import * as fs                 		from "fs";
+import * as path               		from "path";
+import type { TsconfigType } 		from "types/tsconfig.type";
+import { bold, green, red, underline, yellow } 	   			from "./utils/color";
+import type { Node, Program, ArgumentListElement, Literal } from "esprima-next";
 
 const log     = console.log;
 const testRun = false;
@@ -41,20 +43,21 @@ const testRun = false;
 export class ParserEngine {
 	public projectPath: string;
 
-	nrFilesProcessed: number = 0;
-	nrPathsProcessed: number = 0;
+	nrFilesProcessed = 0;
+	nrMappedPaths = 0;
+	nrPathsProcessed = 0;
 	srcRoot: string;
 	basePath: string;
 	distRoot: string;
-	compactMode: boolean     = true;
+	compactMode     = true;
 	projectOptions: ProjectOptions;
-	tsConfig: any;
+	tsConfig: TsconfigType;
 	fileFilter: Array<string>;
 
 	constructor() {
 	}
 
-	public exit(code: number = 5) {
+	public exit(code = 5) {
 		console.log("Terminating...");
 		process.exit(code);
 	}
@@ -62,7 +65,7 @@ export class ParserEngine {
 
 	public setProjectPath(projectPath: string): boolean {
 		if (!Utils.isEmpty(projectPath) && !this.validateProjectPath(projectPath)) {
-			log(chalk.red.bold("Project Path \"" + chalk.underline(projectPath) + "\" is invalid!"));
+			log(red(bold(("Project Path \"" + underline(projectPath) + "\" is invalid!"))));
 			return false;
 		}
 
@@ -92,7 +95,7 @@ export class ParserEngine {
 		}
 
 		if (!fs.existsSync(configFile)) {
-			log("TypeScript Compiler - Configuration file " + chalk.underline(Const.TS_CONFIG) + " is missing!");
+			log("TypeScript Compiler - Configuration file " + underline(Const.TS_CONFIG) + " is missing!");
 		}
 
 		return result;
@@ -104,10 +107,11 @@ export class ParserEngine {
 	 */
 	private readProjectName(): string {
 		let projectName: string = null;
-		let filename            = path.resolve(this.projectPath, "package.json");
+		const filename            = path.resolve(this.projectPath, "package.json");
 
 		if (fs.existsSync(filename)) {
-			let json    = require(filename);
+			// eslint-disable-next-line @typescript-eslint/no-var-requires
+			const json    = require(filename);
 			projectName = json.name;
 		}
 
@@ -122,24 +126,24 @@ export class ParserEngine {
 		console.time(PROCESS_TIME);
 
 		if (!this.validateProjectPath(this.projectPath)) {
-			log(chalk.bold.red("Invalid project path!"));
+			log(bold(red("Invalid project path!")));
 			this.exit(10);
 		}
 
 		this.projectOptions = this.readConfig();
-		let projectName     = this.readProjectName();
+		const projectName     = this.readProjectName();
 
 		if (!Utils.isEmpty(projectName)) {
-			log(chalk.yellow("Parsing project: ") + chalk.bold(projectName) + " " + chalk.underline(this.projectPath));
+			log(yellow("Parsing project: ") + bold(projectName) + " " + underline(this.projectPath));
 		}
 		else {
-			log(chalk.yellow.bold("Parsing project at: ") + "\"" + this.projectPath + "\"");
+			log(yellow(bold("Parsing project at: ") + "\"" + this.projectPath + "\""));
 		}
 
 		this.distRoot = path.resolve(this.projectPath, this.projectOptions.outDir);
 		this.basePath = this.distRoot;
 
-		let tmpPath = path.resolve(this.distRoot, this.projectOptions.baseUrl);
+		const tmpPath = path.resolve(this.distRoot, this.projectOptions.baseUrl);
 
 		//
 		// If the baseUrl exist in the dist folder, the TS Compiler have re-used the src structure
@@ -158,20 +162,21 @@ export class ParserEngine {
 			console.log("Src path ::", this.srcRoot);
 		}
 
-		let fileList = new Array<string>();
+		const fileList = new Array<string>();
 
 		this.walkSync(this.distRoot, fileList, ".js");
 
 		for (let i = 0; i < fileList.length; i++) {
-			let filename = fileList[ i ];
+			const filename = fileList[ i ];
 			this.processFile(filename);
 		}
 
-		log(chalk.bold("Total files processed:"), this.nrFilesProcessed);
-		log(chalk.bold("Total paths processed:"), this.nrPathsProcessed);
+		log(bold("\nTotal files processed:"), this.nrFilesProcessed);
+		log(bold("Total paths processed:"), this.nrPathsProcessed);
+		log(bold("Total mapped paths resolved:"), this.nrMappedPaths);
 
 		console.timeEnd(PROCESS_TIME);
-		log(chalk.bold.green("Project is prepared, now run it normally!"));
+		log(bold(green("Project is prepared, now run it normally!")));
 	}
 
 	private shouldSkipFile(filename: string): boolean {
@@ -181,74 +186,74 @@ export class ParserEngine {
 
 	/**
 	 *
-	 * @param sourceFilename
-	 * @param jsRequire - require in javascript source "require("jsRequire")
+	 * @param sourceFilename - source file that the `require` statement was found in
+	 * @param jsRequire - require in javascript source `require("jsRequire")`
 	 * @returns {string}
 	 */
 	getRelativePathForRequiredFile(sourceFilename: string, jsRequire: string) {
-		let options = this.projectOptions;
+		const options = this.projectOptions;
+		// absolute path of "baseUrl" specified in tsconfig.json
+		const baseUrl = path.join(this.projectPath, this.projectOptions.baseUrl);
 
 		if (Const.DEBUG_MODE) {
-			console.log("getRelativePathForRequiredFile ::---", sourceFilename);
+			console.log("\ngetRelativePathForRequiredFile");
+			console.log("\tsourceFilename == ", sourceFilename);
+			console.log("\tjsRequire == ", jsRequire);
 		}
 
-		for (let alias in options.pathMappings) {
-			let mapping = options.pathMappings[ alias ];
+		// iterate over all of the "paths" specified in tsconfig.json
+		for (const aliasRaw in options.pathMappings) {
+			// get the mapping of this alias
+			const mappingRaw = options.pathMappings[aliasRaw];
 
 			//TODO: Handle * properly
-			alias   = Utils.stripWildcard(alias);
-			mapping = Utils.stripWildcard(mapping);
+			const alias   = Utils.stripWildcard(aliasRaw);
+			const mapping = Utils.stripWildcard(mappingRaw);
 
 			// 2018-06-02: Workaround for bug with same prefix Aliases e.g @db and @dbCore
+			// 2022-10-19: Workaround for if Unix paths are used on Windows machines (which they usually are)
 			// Cut alias prefix for mapping comparison
-			let requirePrefix = jsRequire.substring(0, jsRequire.indexOf(path.sep));
+			const requirePrefix = jsRequire.substring(0, jsRequire.indexOf(path.sep)) || jsRequire.substring(0, jsRequire.indexOf("/"));
 
-			if (requirePrefix == alias) {
-				let result = jsRequire.replace(alias, mapping);
-				Utils.replaceDoubleSlashes(result);
+			// if no match, go to next alias
+			// N.B. Please use guard clauses, like this
+			if (requirePrefix !== alias) continue;
 
-				let absoluteJsRequire = path.join(this.basePath, result);
+			this.nrMappedPaths++;
 
-				if (!fs.existsSync(`${ absoluteJsRequire }.js`)) {
-					const newResult   = jsRequire.replace(alias, "");
-					absoluteJsRequire = path.join(this.basePath, newResult);
-				}
+			const requireMapped = Utils.replaceDoubleSlashes(
+				// Path to required file relative to baseUrl (from tsconfig.json)
+				jsRequire.replace(alias, mapping)
+			);
 
-				let sourceDir = path.dirname(sourceFilename);
+			// let absoluteJsRequire = path.join(this.basePath, requireMapped);
 
-				if (Const.DEBUG_MODE) {
-					console.log("sourceDir == ", sourceDir);
-					console.log("absoluteJsRequire == ", absoluteJsRequire);
-					console.log("this.distRoot == ", this.distRoot);
-					console.log("sourceFilename == ", sourceFilename);
-				}
+			// idk what this is for but don't seem to need it rn
+			// if (!fs.existsSync(`${ absoluteJsRequire }.js`)) {
+			// 	const newResult   = jsRequire.replace(alias, "");
+			// 	absoluteJsRequire = path.join(this.basePath, newResult);
+			// }
 
-				const fromPath = path.dirname(sourceFilename);
-				const toPath   = path.dirname(absoluteJsRequire + ".js");
+			// directory of the source file
+			const sourceFileDir = path.dirname(sourceFilename);
 
-				let relativePath = PathUtils.getRelativePath(fromPath, toPath);
+			// path of baseUrl (from tsconfig.json) relative to sourceFileDir
+			const pathToBase = PathUtils.getRelativePath(sourceFileDir, baseUrl);
 
-				/*
-				let relativePath = path.relative(fromPath, toPath);
+			// final path of required file relative to source file
+			const relativeJsRequire = path.join(pathToBase, requireMapped);
 
-				if (!relativePath.trim().length) {
-					relativePath = ".";
-				}
-
-				relativePath = Utils.ensureTrailingPathDelimiter(relativePath);
-				*/
-
-				//
-				// If the path does not start with .. it´ not a sub directory
-				// as in ../ or ..\ so assume it´ the same dir...
-				//
-				if (relativePath[ 0 ] !== ".") {
-					relativePath = "./" + relativePath;
-				}
-
-				jsRequire = relativePath + path.parse(absoluteJsRequire).base;
-				break;
+			if (Const.DEBUG_MODE) {
+				console.log("\tbaseUrl == ", baseUrl);
+				console.log("\tsourceFileDir == ", sourceFileDir);
+				console.log("\trequireMapped == ", requireMapped);
+				console.log("\trelativeJsRequire == ", relativeJsRequire)
+				// console.log("absoluteJsRequire == ", absoluteJsRequire);
 			}
+
+			jsRequire = relativeJsRequire;
+
+			break;
 		}
 
 		return jsRequire;
@@ -258,19 +263,19 @@ export class ParserEngine {
 	 * Processes the filename specified in require("filename")
 	 * @param node
 	 * @param sourceFilename
-	 * @returns {any}
+	 * @returns 
 	 */
-	processJsRequire(node: any, sourceFilename: string): any {
-		let resultNode      = node;
-		let requireInJsFile = Utils.safeGetAstNodeValue(node);
+	processJsRequire(node: ArgumentListElement, sourceFilename: string): ArgumentListElement {
+		let resultNode: ArgumentListElement = node;
+		const requireInJsFile = Utils.safeGetAstNodeValue(node as Literal);
 
 		//
 		// Only proceed if the "require" contains a full file path, not
 		// single references like "inversify"
 		//
 		if (!Utils.isEmpty(requireInJsFile) && Utils.fileHavePath(requireInJsFile)) {
-			let relativePath = this.getRelativePathForRequiredFile(sourceFilename, requireInJsFile);
-			resultNode       = { type: "Literal", value: relativePath, raw: relativePath };
+			const relativePath = this.getRelativePathForRequiredFile(sourceFilename, requireInJsFile);
+			resultNode         = { type: esprima.Syntax.Literal, value: relativePath, raw: relativePath };
 
 			this.nrPathsProcessed++;
 		}
@@ -285,9 +290,9 @@ export class ParserEngine {
 	processFile(filename: string) {
 		this.nrFilesProcessed++;
 
-		let scope           = this;
-		let inputSourceCode = fs.readFileSync(filename, Const.FILE_ENCODING);
-		let ast             = null;
+		const scope           = this;
+		const inputSourceCode = fs.readFileSync(filename, Const.FILE_ENCODING);
+		let ast: Program | null = null;
 
 		try {
 			ast = esprima.parse(inputSourceCode); //, { raw: true, tokens: true, range: true, comment: true });
@@ -299,13 +304,18 @@ export class ParserEngine {
 		}
 
 		this.traverseSynTree(ast, this, (node) => {
-			if (node != undefined && node.type == "CallExpression" && node.callee.name == "require") {
+			if (
+				node != undefined
+				&& node.type == "CallExpression"
+				&& node.callee.type === "Identifier" 
+				&& node.callee.name == "require"
+			) {
 				node.arguments[ 0 ] = scope.processJsRequire(node.arguments[ 0 ], filename);
 			}
 		});
 
-		let option      = { comment: true, format: { compact: this.compactMode, quotes: "\"" } };
-		let finalSource = escodegen.generate(ast, option);
+		const option      = { comment: true, format: { compact: this.compactMode, quotes: "\"" } };
+		const finalSource = escodegen.generate(ast, option);
 
 		try {
 			if (!testRun) {
@@ -313,7 +323,7 @@ export class ParserEngine {
 			}
 		}
 		catch (error) {
-			log(chalk.bold.red("Unable to write file:"), filename);
+			log(bold(red("Unable to write file:")), filename);
 			this.exit();
 		}
 	}
@@ -341,7 +351,7 @@ export class ParserEngine {
 		fileName = path.resolve(this.projectPath, fileName);
 		let fileData = fs.readFileSync(fileName, Const.FILE_ENCODING);
 
-		let jsonCS = new JsonCommentStripper();
+		const jsonCS = new JsonCommentStripper();
 		fileData   = jsonCS.stripComments(fileData);
 
 		try {
@@ -351,16 +361,16 @@ export class ParserEngine {
 			Logger.error(`JSON parser failed for file "${fileName}"`);
 		}
 
-		let compilerOpt = this.tsConfig.compilerOptions;
+		const compilerOpt = this.tsConfig.compilerOptions;
 
-		let reqFields          = [];
+		const reqFields          = [];
 		reqFields[ "baseUrl" ] = compilerOpt.baseUrl;
 		reqFields[ "outDir" ]  = compilerOpt.outDir;
 
-		for (let key in reqFields) {
-			let field = reqFields[ key ];
+		for (const key in reqFields) {
+			const field = reqFields[ key ];
 			if (Utils.isEmpty(field)) {
-				log(chalk.red.bold("Missing required field:") + " \"" + chalk.bold.underline(key) + "\"");
+				log(red(bold("Missing required field:")) + " \"" + bold(underline(key)) + "\"");
 				this.exit(22);
 			}
 		}
@@ -374,11 +384,11 @@ export class ParserEngine {
 	 * @param scope
 	 * @param func
 	 */
-	private traverseSynTree(ast, scope, func): void {
+	private traverseSynTree(ast: Node, scope: ParserEngine, func: (a: Node) => void): void {
 		func(ast);
-		for (let key in ast) {
+		for (const key in ast) {
 			if (ast.hasOwnProperty(key)) {
-				let child = ast[ key ];
+				const child = ast[ key ];
 
 				if (typeof child === "object" && child !== null) {
 					if (Array.isArray(child)) {
@@ -414,20 +424,20 @@ export class ParserEngine {
 	 * @returns {Array<string>}
 	 */
 	public walkSync(dir: string, filelist: Array<string>, fileExtension?: string) {
-		let scope     = this;
-		let files     = fs.readdirSync(dir);
+		const scope     = this;
+		const files     = fs.readdirSync(dir);
 		filelist      = filelist || [];
 		fileExtension = fileExtension === undefined ? "" : fileExtension;
 
-		for (let file of files) {
+		for (const file of files) {
 			if (fs.statSync(path.join(dir, file)).isDirectory()) {
 				filelist = this.walkSync(path.join(dir, file), filelist, fileExtension);
 			}
 			else {
-				let tmpExt = path.extname(file);
+				const tmpExt = path.extname(file);
 
 				if (scope.matchExtension(tmpExt)) {
-					let fullFilename = path.join(dir, file);
+					const fullFilename = path.join(dir, file);
 					filelist.push(fullFilename);
 				}
 			}

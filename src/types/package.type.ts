@@ -10,12 +10,15 @@ export interface PackageType extends IJsonFile {
 	version?: string;
 	description?: string;
 	license?: string;
-	scripts?: any;
+	scripts?: Record<string, string>;
 	preferGlobal?: boolean;
-	bin?: any;
+	bin?: Record<string, string>;
 	keywords?: string[];
 	author?: string;
-	repository?: any;
-	dependencies?: any;
-	devDependencies?: any;
+	repository?: {
+		type: string,
+		url: string
+	};
+	dependencies?: Record<string, string>;
+	devDependencies?: Record<string, string>;
 }

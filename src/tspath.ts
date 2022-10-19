@@ -24,39 +24,38 @@
 
  =----------------------------------------------------------------= */
 
-let chalk = require("chalk");
-let log = console.log;
-let Confirm = require("prompt-confirm");
-let yargs = require("yargs").argv;
+const log = console.log;
 
-import { ParserEngine }     from "./parser-engine";
-import { Const }            from "./tspath.const";
-import { JsonFile }         from "./utils/json-file";
-import { ParentFileFinder } from "./utils/parent-file-finder";
+import * as Confirm 		 from "prompt-confirm";
+import { argv as yargs } 	 from "yargs";
+import { bold, red, yellow } from "./utils/color";
+import { ParserEngine }      from "./parser-engine";
+import { Const }             from "./tspath.const";
+import { ParentFileFinder }  from "./utils/parent-file-finder";
 
 export class TSPath {
 	private engine = new ParserEngine();
 
 	constructor() {
-		const pkg: any = new JsonFile("package.json");
+		// const pkg: any = new JsonFile("package.json");
 
-		log(chalk.yellow(`TSPath v${ Const.VERSION }`));
+		log(yellow(`TSPath v${ Const.VERSION }`));
 		let filter = ["js"];
 		const force: boolean = yargs.force || yargs.f;
-		const verbose: boolean = yargs.verbose || yargs.v;
-		let projectPath = process.cwd();
-		let compactOutput = !yargs.preserve;
-		let findResult = ParentFileFinder.findFile(projectPath, Const.TS_CONFIG);
+		// const verbose: boolean = yargs.verbose || yargs.v;
+		const projectPath = process.cwd();
+		const compactOutput = !yargs.preserve;
+		const findResult = ParentFileFinder.findFile(projectPath, Const.TS_CONFIG);
 
 		if (yargs.ext || yargs.filter) {
-			let argFilter = yargs.ext ? yargs.ext : yargs.filter;
+			const argFilter = yargs.ext ? yargs.ext : yargs.filter;
 			filter = argFilter.split(",").map((ext) => {
 				return ext.replace(/\s/g, "");
 			});
 		}
 
 		if (filter.length === 0) {
-			log(chalk.bold.red("File filter missing!"));
+			log(bold(red("File filter missing!")));
 			process.exit(23);
 		}
 
@@ -66,13 +65,13 @@ export class TSPath {
 		if (force && findResult.fileFound) {
 			this.processPath(findResult.path);
 		} else if (findResult.fileFound) {
-			let confirm = new Confirm("Process project at: <" + findResult.path + "> ?").ask(answer => {
+			new Confirm("Process project at: <" + findResult.path + "> ?").ask((answer: boolean) => {
 				if (answer) {
 					this.processPath(findResult.path);
 				}
 			});
 		} else {
-			log(chalk.bold("No project root found!"));
+			log(bold("No project root found!"));
 		}
 	}
 

@@ -1,18 +1,32 @@
 {
-	"name":            "tspath",
-	"version":         "2.5.4",
-	"description":     "TypeScript path alias resolver, re-writes JS files with relative paths according to @paths specified in tsconfig",
-	"license":         "LGPL-2.1",
-	"scripts":         {
-		"copy":   "copyfiles package.json lib",
-		"tspath": "node ./tspath.js"
+	"name": "tspath",
+	"version": "2.5.4",
+	"description": "TypeScript path alias resolver, re-writes JS files with relative paths according to @paths specified in tsconfig",
+	"license": "LGPL-2.1",
+	"files": [
+		"lib/",
+		"package.json",
+		"LICENSE"
+	],
+	"scripts": {
+		"copy": "copyfiles package.json lib",
+		"tspath": "node ./tspath.js",
+		"watch": "tsc -w",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"prepare": "husky install",
+		"prettify": "prettier ./lib/**/*.js --write",
+		"prebuild": "yarn lint",
+		"build": "tsc",
+		"postbuild": "yarn prettify",
+		"prepack": "yarn build"
 	},
-	"preferGlobal":    true,
+	"preferGlobal": true,
 	"main": "index.js",
-	"bin":             {
+	"bin": {
 		"tspath": "./tspath.js"
 	},
-	"keywords":        [
+	"keywords": [
 		"tspath",
 		"relative",
 		"path",
@@ -21,26 +35,33 @@
 		"resolve",
 		"alias"
 	],
-	"author":          "Patrik Forsberg <patrik.forsberg@coldmind.com>",
-	"repository":      {
+	"author": "Patrik Forsberg <patrik.forsberg@coldmind.com>",
+	"repository": {
 		"type": "git",
-		"url":  "git+https://github.com/duffman/tspath.git"
+		"url": "git+https://github.com/duffman/tspath.git"
 	},
 	"devDependencies": {
-		"@types/chai":  "^4.0.4",
+		"@types/chai": "^4.0.4",
 		"@types/mocha": "^2.2.42",
-		"@types/node":  "^8.0.25",
-		"chai":         "^4.1.2",
-		"copyfiles":    "^2.4.1",
-		"mocha":        "^3.5.0",
-		"prettier":     "^2.7.1"
+		"@types/node": "^8.0.25",
+		"@types/supports-color": "8.1.1",
+		"@typescript-eslint/eslint-plugin": "^5.40.1",
+		"@typescript-eslint/parser": "^5.40.1",
+		"chai": "^4.1.2",
+		"copyfiles": "^2.4.1",
+		"eslint": "^8.25.0",
+		"husky": "^8.0.1",
+		"mocha": "^3.5.0",
+		"prettier": "^2.7.1",
+		"typescript-eslint": "^0.0.1-alpha.0"
 	},
-	"dependencies":    {
-		"chalk":          "^2.3.0",
-		"escodegen":      "^1.8.1",
-		"esprima":        "^4.0.0",
+	"dependencies": {
+		"chalk": "^2.3.0",
+		"escodegen": "^1.8.1",
+		"esprima-next": "^5.8.4",
 		"prompt-confirm": "^1.2.0",
-		"typescript":     "^4.4.2",
-		"yargs":          "^11.0.0"
+		"supports-color": "8.1.1",
+		"typescript": "^4.4.2",
+		"yargs": "^11.0.0"
 	}
 }

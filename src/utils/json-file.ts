@@ -30,11 +30,11 @@ import { Const }  from "../tspath.const";
 import { Logger } from "./logger";
 
 export interface IJsonFile {
-	rawData: any;
+	rawData: unknown;
 }
 
 export class JsonFile implements IJsonFile {
-	public rawData: any;
+	public rawData: unknown;
 
 	constructor(filename: string) {
 		try {
@@ -52,7 +52,7 @@ export class JsonFile implements IJsonFile {
 	 * @param defVal
 	 * @returns {any}
 	 */
-	public getProp<T = any>(name: string, defVal?: any): any {
+	public getProp<T>(name: string, defVal?: T): T {
 		try {
 			return this.rawData[name] as T;
 		} catch (e) {

@@ -29,10 +29,10 @@ const Confirm = require("prompt-confirm");
 const yargs = require("yargs").argv;
 
 import { bold, red, yellow } from "./utils/color";
-import { ParserEngine }     from "./parser-engine";
-import { Const }            from "./tspath.const";
-import { JsonFile }         from "./utils/json-file";
-import { ParentFileFinder } from "./utils/parent-file-finder";
+import { ParserEngine }      from "./parser-engine";
+import { Const }             from "./tspath.const";
+import { JsonFile }          from "./utils/json-file";
+import { ParentFileFinder }  from "./utils/parent-file-finder";
 
 export class TSPath {
 	private engine = new ParserEngine();

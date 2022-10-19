@@ -22,18 +22,19 @@
 
  =----------------------------------------------------------------= */
 
-const esprima   = require("esprima");
 const escodegen = require("escodegen");
 
-import { Const }               from "./tspath.const";
-import { Logger }              from "./utils/logger";
-import { PathUtils }           from "./utils/path.utils";
-import { Utils }               from "./utils/utils";
-import { JsonCommentStripper } from "./utils/json-comment-stripper";
-import { ProjectOptions }      from "./project-options";
-import * as fs                 from "fs";
-import * as path               from "path";
-import { bold, green, red, underline, yellow } from "./utils/color";
+import esprima from "esprima-next";
+import { Const }               		from "./tspath.const";
+import { Logger }              		from "./utils/logger";
+import { PathUtils }           		from "./utils/path.utils";
+import { Utils }               		from "./utils/utils";
+import { JsonCommentStripper } 		from "./utils/json-comment-stripper";
+import { ProjectOptions }      		from "./project-options";
+import * as fs                 		from "fs";
+import * as path               		from "path";
+import { bold, green, red, underline, yellow } 	   from "./utils/color";
+import type { Node, Program, ArgumentListElement } from "esprima-next";
 
 const log     = console.log;
 const testRun = false;
@@ -42,6 +43,7 @@ export class ParserEngine {
 	public projectPath: string;
 
 	nrFilesProcessed: number = 0;
+	nrMappedPaths: number = 0;
 	nrPathsProcessed: number = 0;
 	srcRoot: string;
 	basePath: string;
@@ -167,8 +169,9 @@ export class ParserEngine {
 			this.processFile(filename);
 		}
 
-		log(bold("Total files processed:"), this.nrFilesProcessed);
+		log(bold("\nTotal files processed:"), this.nrFilesProcessed);
 		log(bold("Total paths processed:"), this.nrPathsProcessed);
+		log(bold("Total mapped paths resolved:"), this.nrMappedPaths);
 
 		console.timeEnd(PROCESS_TIME);
 		log(bold(green("Project is prepared, now run it normally!")));
@@ -181,74 +184,73 @@ export class ParserEngine {
 
 	/**
 	 *
-	 * @param sourceFilename
-	 * @param jsRequire - require in javascript source "require("jsRequire")
+	 * @param sourceFilename - source file that the `require` statement was found in
+	 * @param jsRequire - require in javascript source `require("jsRequire")`
 	 * @returns {string}
 	 */
 	getRelativePathForRequiredFile(sourceFilename: string, jsRequire: string) {
-		let options = this.projectOptions;
+		const options = this.projectOptions;
+		// absolute path of "baseUrl" specified in tsconfig.json
+		const baseUrl = path.join(this.projectPath, this.projectOptions.baseUrl);
 
 		if (Const.DEBUG_MODE) {
-			console.log("getRelativePathForRequiredFile ::---", sourceFilename);
+			console.log("\ngetRelativePathForRequiredFile");
+			console.log("\tsourceFilename == ", sourceFilename);
+			console.log("\tjsRequire == ", jsRequire);
 		}
 
-		for (let alias in options.pathMappings) {
-			let mapping = options.pathMappings[ alias ];
+		// iterate over all of the "paths" specified in tsconfig.json
+		for (const aliasRaw in options.pathMappings) {
+			// get the mapping of this alias
+			const mappingRaw = options.pathMappings[aliasRaw];
 
 			//TODO: Handle * properly
-			alias   = Utils.stripWildcard(alias);
-			mapping = Utils.stripWildcard(mapping);
+			const alias   = Utils.stripWildcard(aliasRaw);
+			const mapping = Utils.stripWildcard(mappingRaw);
 
 			// 2018-06-02: Workaround for bug with same prefix Aliases e.g @db and @dbCore
+			// 2022-10-19: Workaround for if Unix paths are used on Windows machines (which they usually are)
 			// Cut alias prefix for mapping comparison
-			let requirePrefix = jsRequire.substring(0, jsRequire.indexOf(path.sep));
+			const requirePrefix = jsRequire.substring(0, jsRequire.indexOf(path.sep)) || jsRequire.substring(0, jsRequire.indexOf("/"));
 
-			if (requirePrefix == alias) {
-				let result = jsRequire.replace(alias, mapping);
-				Utils.replaceDoubleSlashes(result);
+			// if no match, go to next alias
+			// N.B. Please use guard clauses, like this
+			if (requirePrefix !== alias) continue;
 
-				let absoluteJsRequire = path.join(this.basePath, result);
+			this.nrMappedPaths++;
 
-				if (!fs.existsSync(`${ absoluteJsRequire }.js`)) {
-					const newResult   = jsRequire.replace(alias, "");
-					absoluteJsRequire = path.join(this.basePath, newResult);
-				}
+			// Path to required file relative to baseUrl (from tsconfig.json)
+			const requireMapped = jsRequire.replace(alias, mapping);
+			Utils.replaceDoubleSlashes(requireMapped);
 
-				let sourceDir = path.dirname(sourceFilename);
+			// let absoluteJsRequire = path.join(this.basePath, requireMapped);
 
-				if (Const.DEBUG_MODE) {
-					console.log("sourceDir == ", sourceDir);
-					console.log("absoluteJsRequire == ", absoluteJsRequire);
-					console.log("this.distRoot == ", this.distRoot);
-					console.log("sourceFilename == ", sourceFilename);
-				}
+			// idk what this is for but don't seem to need it rn
+			// if (!fs.existsSync(`${ absoluteJsRequire }.js`)) {
+			// 	const newResult   = jsRequire.replace(alias, "");
+			// 	absoluteJsRequire = path.join(this.basePath, newResult);
+			// }
 
-				const fromPath = path.dirname(sourceFilename);
-				const toPath   = path.dirname(absoluteJsRequire + ".js");
+			// directory of the source file
+			const sourceFileDir = path.dirname(sourceFilename);
 
-				let relativePath = PathUtils.getRelativePath(fromPath, toPath);
+			// path of baseUrl (from tsconfig.json) relative to sourceFileDir
+			const pathToBase = PathUtils.getRelativePath(sourceFileDir, baseUrl);
 
-				/*
-				let relativePath = path.relative(fromPath, toPath);
+			// final path of required file relative to source file
+			const relativeJsRequire = path.join(pathToBase, requireMapped);
 
-				if (!relativePath.trim().length) {
-					relativePath = ".";
-				}
-
-				relativePath = Utils.ensureTrailingPathDelimiter(relativePath);
-				*/
-
-				//
-				// If the path does not start with .. it´ not a sub directory
-				// as in ../ or ..\ so assume it´ the same dir...
-				//
-				if (relativePath[ 0 ] !== ".") {
-					relativePath = "./" + relativePath;
-				}
-
-				jsRequire = relativePath + path.parse(absoluteJsRequire).base;
-				break;
+			if (Const.DEBUG_MODE) {
+				console.log("\tbaseUrl == ", baseUrl);
+				console.log("\tsourceFileDir == ", sourceFileDir);
+				console.log("\trequireMapped == ", requireMapped);
+				console.log("\trelativeJsRequire == ", relativeJsRequire)
+				// console.log("absoluteJsRequire == ", absoluteJsRequire);
 			}
+
+			jsRequire = relativeJsRequire;
+
+			break;
 		}
 
 		return jsRequire;
@@ -258,19 +260,19 @@ export class ParserEngine {
 	 * Processes the filename specified in require("filename")
 	 * @param node
 	 * @param sourceFilename
-	 * @returns {any}
+	 * @returns 
 	 */
-	processJsRequire(node: any, sourceFilename: string): any {
-		let resultNode      = node;
-		let requireInJsFile = Utils.safeGetAstNodeValue(node);
+	processJsRequire(node: ArgumentListElement, sourceFilename: string): ArgumentListElement {
+		let resultNode: ArgumentListElement = node;
+		const requireInJsFile = Utils.safeGetAstNodeValue(node);
 
 		//
 		// Only proceed if the "require" contains a full file path, not
 		// single references like "inversify"
 		//
 		if (!Utils.isEmpty(requireInJsFile) && Utils.fileHavePath(requireInJsFile)) {
-			let relativePath = this.getRelativePathForRequiredFile(sourceFilename, requireInJsFile);
-			resultNode       = { type: "Literal", value: relativePath, raw: relativePath };
+			const relativePath = this.getRelativePathForRequiredFile(sourceFilename, requireInJsFile);
+			resultNode         = { type: esprima.Syntax.Literal, value: relativePath, raw: relativePath };
 
 			this.nrPathsProcessed++;
 		}
@@ -287,7 +289,7 @@ export class ParserEngine {
 
 		let scope           = this;
 		let inputSourceCode = fs.readFileSync(filename, Const.FILE_ENCODING);
-		let ast             = null;
+		let ast: Program | null = null;
 
 		try {
 			ast = esprima.parse(inputSourceCode); //, { raw: true, tokens: true, range: true, comment: true });
@@ -299,7 +301,12 @@ export class ParserEngine {
 		}
 
 		this.traverseSynTree(ast, this, (node) => {
-			if (node != undefined && node.type == "CallExpression" && node.callee.name == "require") {
+			if (
+				node != undefined
+				&& node.type == "CallExpression"
+				&& node.callee.type === "Identifier" 
+				&& node.callee.name == "require"
+			) {
 				node.arguments[ 0 ] = scope.processJsRequire(node.arguments[ 0 ], filename);
 			}
 		});
@@ -374,7 +381,7 @@ export class ParserEngine {
 	 * @param scope
 	 * @param func
 	 */
-	private traverseSynTree(ast, scope, func): void {
+	private traverseSynTree(ast: Node, scope: ParserEngine, func: (a: Node) => void): void {
 		func(ast);
 		for (let key in ast) {
 			if (ast.hasOwnProperty(key)) {

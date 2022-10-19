@@ -13,6 +13,8 @@ node_modules
 node_modules/
 test/
 
+.vscode
+
 # Logs
 logs
 *.log

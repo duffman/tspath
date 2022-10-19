@@ -22,9 +22,8 @@
 
  =----------------------------------------------------------------= */
 
-let esprima   = require("esprima");
-let escodegen = require("escodegen");
-let chalk     = require("chalk");
+const esprima   = require("esprima");
+const escodegen = require("escodegen");
 
 import { Const }               from "./tspath.const";
 import { Logger }              from "./utils/logger";
@@ -34,6 +33,7 @@ import { JsonCommentStripper } from "./utils/json-comment-stripper";
 import { ProjectOptions }      from "./project-options";
 import * as fs                 from "fs";
 import * as path               from "path";
+import { bold, green, red, underline, yellow } from "./utils/color";
 
 const log     = console.log;
 const testRun = false;
@@ -62,7 +62,7 @@ export class ParserEngine {
 
 	public setProjectPath(projectPath: string): boolean {
 		if (!Utils.isEmpty(projectPath) && !this.validateProjectPath(projectPath)) {
-			log(chalk.red.bold("Project Path \"" + chalk.underline(projectPath) + "\" is invalid!"));
+			log(red(bold(("Project Path \"" + underline(projectPath) + "\" is invalid!"))));
 			return false;
 		}
 
@@ -92,7 +92,7 @@ export class ParserEngine {
 		}
 
 		if (!fs.existsSync(configFile)) {
-			log("TypeScript Compiler - Configuration file " + chalk.underline(Const.TS_CONFIG) + " is missing!");
+			log("TypeScript Compiler - Configuration file " + underline(Const.TS_CONFIG) + " is missing!");
 		}
 
 		return result;
@@ -122,7 +122,7 @@ export class ParserEngine {
 		console.time(PROCESS_TIME);
 
 		if (!this.validateProjectPath(this.projectPath)) {
-			log(chalk.bold.red("Invalid project path!"));
+			log(bold(red("Invalid project path!")));
 			this.exit(10);
 		}
 
@@ -130,10 +130,10 @@ export class ParserEngine {
 		let projectName     = this.readProjectName();
 
 		if (!Utils.isEmpty(projectName)) {
-			log(chalk.yellow("Parsing project: ") + chalk.bold(projectName) + " " + chalk.underline(this.projectPath));
+			log(yellow("Parsing project: ") + bold(projectName) + " " + underline(this.projectPath));
 		}
 		else {
-			log(chalk.yellow.bold("Parsing project at: ") + "\"" + this.projectPath + "\"");
+			log(yellow(bold("Parsing project at: ") + "\"" + this.projectPath + "\""));
 		}
 
 		this.distRoot = path.resolve(this.projectPath, this.projectOptions.outDir);
@@ -167,11 +167,11 @@ export class ParserEngine {
 			this.processFile(filename);
 		}
 
-		log(chalk.bold("Total files processed:"), this.nrFilesProcessed);
-		log(chalk.bold("Total paths processed:"), this.nrPathsProcessed);
+		log(bold("Total files processed:"), this.nrFilesProcessed);
+		log(bold("Total paths processed:"), this.nrPathsProcessed);
 
 		console.timeEnd(PROCESS_TIME);
-		log(chalk.bold.green("Project is prepared, now run it normally!"));
+		log(bold(green("Project is prepared, now run it normally!")));
 	}
 
 	private shouldSkipFile(filename: string): boolean {
@@ -313,7 +313,7 @@ export class ParserEngine {
 			}
 		}
 		catch (error) {
-			log(chalk.bold.red("Unable to write file:"), filename);
+			log(bold(red("Unable to write file:")), filename);
 			this.exit();
 		}
 	}
@@ -360,7 +360,7 @@ export class ParserEngine {
 		for (let key in reqFields) {
 			let field = reqFields[ key ];
 			if (Utils.isEmpty(field)) {
-				log(chalk.red.bold("Missing required field:") + " \"" + chalk.bold.underline(key) + "\"");
+				log(red(bold("Missing required field:")) + " \"" + bold(underline(key)) + "\"");
 				this.exit(22);
 			}
 		}

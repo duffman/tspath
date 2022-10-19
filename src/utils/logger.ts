@@ -1,9 +1,9 @@
+import { blue, bold, cyan, magenta, redBright, yellow } from "./color";
+
 /**
  * @author: Patrik Forsberg <patrik.forsberg@coldmind.com>
  * @date: 2022-09-28 10:07
  */
-import chalk from "chalk";
-
 const log = console.log;
 
 export class Logger {
@@ -55,35 +55,35 @@ export class Logger {
 	}
 
 	public static logRed(logMessage: string, ...logData:any[]): void {
-		Logger.logBase(chalk.redBright, logMessage, logData);
+		Logger.logBase(redBright, logMessage, logData);
 	}
 
 	public static logYellow(logMessage: string, logData: any = ""): void {
-		log(chalk.yellow(logMessage), logData);
+		log(yellow(logMessage), logData);
 	}
 
 	public static logCyan(logMessage: string, logData: any = ""): void {
 		if (logData) {
-			log(chalk.cyan(logMessage), logData);
+			log(cyan(logMessage), logData);
 		} else {
-			log(chalk.cyan(logMessage));
+			log(cyan(logMessage));
 		}
 	}
 
 	public static logText(logMessage: string, ...logText: string[]): void {
 		let text = logText.join(" :: ");
-		log(chalk.bold.cyan(logMessage), `:: ${logText}`);
+		log(bold(cyan(logMessage)), `:: ${logText}`);
 	}
 
 	public static logBlue(logMessage: string, logData: any = ""): void {
-		console.log(chalk.blue(logMessage), logData);
+		console.log(blue(logMessage), logData);
 	}
 
 	public static logPurple(logMessage: string, logData: any = null): void {
 		if (logData == null) {
-			log(chalk.magenta(logMessage));
+			log(magenta(logMessage));
 		} else {
-			log(chalk.magenta(logMessage), logData);
+			log(magenta(logMessage), logData);
 		}
 	}
 }

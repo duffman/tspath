@@ -31,7 +31,7 @@ export class PathUtils {
 			relativePath = ".";
 		}
 
-		relativePath = Utils.ensureSlash(relativePath);
+		relativePath = Utils.ensureTrailingSlash(relativePath);
 		return relativePath;
 	}
 }

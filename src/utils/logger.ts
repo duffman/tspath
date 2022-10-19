@@ -2,13 +2,18 @@
  * @author: Patrik Forsberg <patrik.forsberg@coldmind.com>
  * @date: 2022-09-28 10:07
  */
-import chalk from "chalk";
+import { Const } from "../tspath.const";
 
+const chalk = require("ansi-colors");
 const log = console.log;
 
 export class Logger {
 	public static log(...data: any[]): void {
 		log(data);
+	}
+
+	public static debug(...data: any[]): void {
+		if (Const.DEBUG_MODE) log(data);
 	}
 
 	public static error(...data: any[]): void {

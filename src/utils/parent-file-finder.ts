@@ -32,7 +32,6 @@
 
 import * as fs   from "fs";
 import * as path from "path";
-import { Const } from "../tspath.const";
 import { Utils } from "./utils";
 
 export class FileFindResult {
@@ -60,7 +59,7 @@ export class ParentFileFinder {
 
 		for (let i = 0; i < parts.length; i++) {
 			tmpStr     = path.resolve(tmpStr, parts[ i ]);
-			tmpStr     = Utils.ensureSlash(tmpStr);
+			tmpStr     = Utils.ensureTrailingSlash(tmpStr);
 			parts[ i ] = tmpStr;
 		}
 

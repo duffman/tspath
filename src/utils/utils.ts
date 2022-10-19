@@ -45,17 +45,43 @@ export class Utils {
 	 * @param searchPath
 	 * @returns {string}
 	 */
-	public static ensureSlash(searchPath: string) {
+	public static ensureTrailingSlash(searchPath: string) {
+		if (Utils.isEmpty(searchPath)) {
+			return;
+		}
+
+		const pathSep = path.sep;
+		if (!searchPath.endsWith(pathSep)) {
+			searchPath = searchPath + pathSep;
+		}
+		return searchPath;
+	}
+
+	public static sleep(ms: number): Promise<any> {
+		return new Promise((resolve) => setTimeout(resolve, ms));
+	}
+
+	public static updateLine(text: string): void {
+		// @ts-ignore
+		process.stdout.clearLine();
+		// @ts-ignore
+		process.stdout.cursorTo(0);
+		process.stdout.write(text+ '\r');
+	}
+
+	public static ensureLeadingSlash(searchPath: string) {
 		if (Utils.isEmpty(searchPath)) {
 			return;
 		}
 
 		let pathSep = path.sep;
-		if (searchPath.endsWith(pathSep) == false) {
-			searchPath = searchPath + pathSep;
+		if (searchPath.startsWith(pathSep) == false) {
+			searchPath = pathSep + searchPath;
 		}
 		return searchPath;
 	}
+
+
 
 	/**
 	 * Appends given value to a given path
@@ -64,11 +90,11 @@ export class Utils {
 	 * @param trailingDelim
 	 */
 	public static appendToPath(path: string, part: string, trailingDelim: boolean = true) {
-		Utils.ensureSlash(path);
+		Utils.ensureTrailingSlash(path);
 		path += part;
 
 		if (trailingDelim) {
-			Utils.ensureSlash(path);
+			Utils.ensureTrailingSlash(path);
 		}
 	}
 

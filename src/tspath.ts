@@ -24,60 +24,77 @@
 
  =----------------------------------------------------------------= */
 
-let chalk = require("chalk");
-let log = console.log;
+const chalk = require("ansi-colors");
+const log   = console.log;
 let Confirm = require("prompt-confirm");
-let yargs = require("yargs").argv;
+let yargs   = require("yargs")
+	.usage("Resolve relative paths in JS output.\nUsage: run $0 in <project-directory>")
+	.option("force")
+	.alias("force", "f")
+	.describe("force", "Skip confirmation")
 
+	.option("projectPath")
+	.describe("projectPath", "Path to project directory (tsconfig.json)")
+	.string("projectPath")
+
+	.option("verbose")
+	.alias("verbose", "v")
+	.describe("verbose", "Output extra info")
+
+	.option("silent")
+	.alias("silent", "s")
+	.describe("silent", "Output nothing (also includes -force)")
+
+	.option("dryRun")
+	.alias("dryRun", "dry")
+	.describe("dryRun", "Don´t write any output files")
+
+
+	.showHelpOnFail(false, "Specify --help for available options")
+	.help("help")
+	.argv;
+
+import * as os              from "os";
+import * as path            from "path";
 import { ParserEngine }     from "./parser-engine";
 import { Const }            from "./tspath.const";
 import { JsonFile }         from "./utils/json-file";
+import { Logger }           from "./utils/logger";
 import { ParentFileFinder } from "./utils/parent-file-finder";
-import { existsSync } from "fs";
-
-export enum jsTarget {
-	ES2015 = "ES2015",
-	ES2016 = "ES2016",
-	ES2017 = "ES2017",
-	ES2018 = "ES2018",
-	ES2019 = "ES2019",
-	ES2020 = "ES2020",
-	ES3 = "ES3",
-	ES5 = "ES5",
-	ES6 = "ES6",
-}
-
-export interface ITSPathSettings {
-	force: boolean,
-	verbose: boolean,
-	projectPath: string,
-	compactOutput: boolean,
-	preserveComments: boolean,
-	targetJSVersion: jsTarget
-}
+import { existsSync }       from "fs";
+import { Utils }            from "./utils/utils";
 
 export class TSPath {
 	private engine = new ParserEngine();
 
 	constructor() {
 		const pkg: any = new JsonFile("package.json");
-
 		log(chalk.yellow(`TSPath v${ Const.VERSION }`));
-		let filter = ["js"];
-		const force: boolean = yargs.force || yargs.f;
+		console.log("Try: 'tspath --help' for more information");
+
+		let filter             = [ "js" ];
+		const force: boolean   = yargs.force || yargs.f;
 		const verbose: boolean = yargs.verbose || yargs.v;
-		let projectPath = yargs.projectPath ?? process.cwd();
-		let compactOutput = !yargs.preserve;
+		let projectPath        = yargs.projectPath ?? process.cwd();
+		let compactOutput      = !yargs.preserve;
+
+		if (yargs.projectPath && projectPath.startsWith("~")) {
+			projectPath = path.join(
+				os.homedir(),
+				Utils.ensureLeadingSlash(projectPath.substring(1))
+			);
+		}
+
 		let findResult = ParentFileFinder.findFile(projectPath, Const.TS_CONFIG);
 
-		if (yargs.projectPath && !existsSync(yargs.projectPath)) {
-			log(chalk.bold(`Project path "${yargs.projectPath}" was root found!`));
+		if (yargs.projectPath && !existsSync(projectPath)) {
+			log(chalk.bold(`Project path "${ projectPath }" was root found!`));
 			process.exit(666);
 		}
 
 		if (yargs.ext || yargs.filter) {
 			let argFilter = yargs.ext ? yargs.ext : yargs.filter;
-			filter = argFilter.split(",").map((ext) => {
+			filter        = argFilter.split(",").map((ext) => {
 				return ext.replace(/\s/g, "");
 			});
 		}
@@ -92,13 +109,15 @@ export class TSPath {
 
 		if (force && findResult.fileFound) {
 			this.processPath(findResult.path);
-		} else if (findResult.fileFound) {
+		}
+		else if (findResult.fileFound) {
 			let confirm = new Confirm("Process project at: <" + findResult.path + "> ?").ask(answer => {
 				if (answer) {
 					this.processPath(findResult.path);
 				}
 			});
-		} else {
+		}
+		else {
 			log(chalk.bold("No project root found!"));
 		}
 	}

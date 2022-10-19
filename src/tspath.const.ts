@@ -1,7 +1,7 @@
 
 export namespace Const {
-	export const VERSION = "2.5.8";
+	export const VERSION = "2.5.9";
 	export const FILE_ENCODING = "UTF-8";
 	export const TS_CONFIG = "tsconfig.json";
-	export const DEBUG_MODE = true;
+	export const DEBUG_MODE = false;
 }

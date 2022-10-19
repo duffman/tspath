@@ -25,9 +25,9 @@
  =----------------------------------------------------------------= */
 
 const log = console.log;
-const Confirm = require("prompt-confirm");
-const yargs = require("yargs").argv;
 
+import * as Confirm 		 from "prompt-confirm";
+import { argv as yargs } 	 from "yargs";
 import { bold, red, yellow } from "./utils/color";
 import { ParserEngine }      from "./parser-engine";
 import { Const }             from "./tspath.const";

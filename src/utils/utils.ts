@@ -22,7 +22,7 @@
 
  =----------------------------------------------------------------= */
 
-let path = require("path");
+import * as path from "path";
 
 export class Utils {
 	/**

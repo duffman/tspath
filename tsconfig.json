@@ -13,7 +13,6 @@
 		"compactJs": true
 	},
 	"include":         [
-		"./",
 		"src/**/*"
 	],
 	"exclude":         [

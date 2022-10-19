@@ -22,7 +22,7 @@
 
  =----------------------------------------------------------------= */
 
-const escodegen = require("escodegen");
+import * as escodegen from "escodegen";
 
 import esprima from "esprima-next";
 import { Const }               		from "./tspath.const";
@@ -109,6 +109,7 @@ export class ParserEngine {
 		let filename            = path.resolve(this.projectPath, "package.json");
 
 		if (fs.existsSync(filename)) {
+			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			let json    = require(filename);
 			projectName = json.name;
 		}

@@ -3,11 +3,21 @@
 	"version": "2.5.4",
 	"description": "TypeScript path alias resolver, re-writes JS files with relative paths according to @paths specified in tsconfig",
 	"license": "LGPL-2.1",
+	"files": [
+		"lib/",
+		"package.json",
+		"LICENSE"
+	],
 	"scripts": {
 		"copy": "copyfiles package.json lib",
 		"tspath": "node ./tspath.js",
 		"watch": "tsc -w",
-		"prettify": "prettier ./lib/**/*.js --write"
+		"lint": "eslint .",
+		"prettify": "prettier ./lib/**/*.js --write",
+		"prebuild": "yarn lint",
+		"build": "tsc",
+		"postbuild": "yarn prettify",
+		"prepack": "yarn build"
 	},
 	"preferGlobal": true,
 	"main": "index.js",
@@ -33,10 +43,14 @@
 		"@types/mocha": "^2.2.42",
 		"@types/node": "^8.0.25",
 		"@types/supports-color": "8.1.1",
+		"@typescript-eslint/eslint-plugin": "^5.40.1",
+		"@typescript-eslint/parser": "^5.40.1",
 		"chai": "^4.1.2",
 		"copyfiles": "^2.4.1",
+		"eslint": "^8.25.0",
 		"mocha": "^3.5.0",
-		"prettier": "^2.7.1"
+		"prettier": "^2.7.1",
+		"typescript-eslint": "^0.0.1-alpha.0"
 	},
 	"dependencies": {
 		"chalk": "^2.3.0",

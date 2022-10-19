@@ -26,7 +26,7 @@ const ac = (str: string) =>
         ? ESCAPE + str
         : "";
 
-const RESET_ALL = ac(formatters.reset);
+// const RESET_ALL = ac(formatters.reset);
 
 // colors
 const DEFAULT_COLOR = ac(colors.default);

@@ -22,6 +22,7 @@
 
  =----------------------------------------------------------------= */
 
+import type { Literal } from "esprima-next";
 import * as path from "path";
 
 export class Utils {
@@ -30,8 +31,8 @@ export class Utils {
 	 * @param node
 	 * @returns {string}
 	 */
-	public static safeGetAstNodeValue(node: any): string {
-		if (Utils.isEmpty(node) || Utils.isEmpty(node.value)) {
+	public static safeGetAstNodeValue(node: Literal): string {
+		if (Utils.isEmpty(node) || Utils.isEmpty(node.value) || typeof node.value !== "string") {
 			return "";
 		} else {
 			return node.value;
@@ -50,7 +51,7 @@ export class Utils {
 			return;
 		}
 
-		let pathSep = path.sep;
+		const pathSep = path.sep;
 		if (searchPath.endsWith(pathSep) == false) {
 			searchPath = searchPath + pathSep;
 		}
@@ -63,7 +64,7 @@ export class Utils {
 	 * @param part
 	 * @param trailingDelim
 	 */
-	public static appendToPath(path: string, part: string, trailingDelim: boolean = true) {
+	public static appendToPath(path: string, part: string, trailingDelim = true) {
 		Utils.ensureTrailingPathDelimiter(path);
 		path += part;
 
@@ -99,7 +100,7 @@ export class Utils {
 	 * @param filePath
 	 */
 	static replaceDoubleSlashes(filePath: string) {
-		filePath = path.normalize(filePath);
+		return path.normalize(filePath);
 	}
 	/**
 	 * Converts EFBBBF (UTF-8 BOM) to FEFF (UTF-16 BOM)

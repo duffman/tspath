@@ -33,8 +33,9 @@ import { JsonCommentStripper } 		from "./utils/json-comment-stripper";
 import { ProjectOptions }      		from "./project-options";
 import * as fs                 		from "fs";
 import * as path               		from "path";
-import { bold, green, red, underline, yellow } 	   from "./utils/color";
-import type { Node, Program, ArgumentListElement } from "esprima-next";
+import type { TsconfigType } 		from "types/tsconfig.type";
+import { bold, green, red, underline, yellow } 	   			from "./utils/color";
+import type { Node, Program, ArgumentListElement, Literal } from "esprima-next";
 
 const log     = console.log;
 const testRun = false;
@@ -42,21 +43,21 @@ const testRun = false;
 export class ParserEngine {
 	public projectPath: string;
 
-	nrFilesProcessed: number = 0;
-	nrMappedPaths: number = 0;
-	nrPathsProcessed: number = 0;
+	nrFilesProcessed = 0;
+	nrMappedPaths = 0;
+	nrPathsProcessed = 0;
 	srcRoot: string;
 	basePath: string;
 	distRoot: string;
-	compactMode: boolean     = true;
+	compactMode     = true;
 	projectOptions: ProjectOptions;
-	tsConfig: any;
+	tsConfig: TsconfigType;
 	fileFilter: Array<string>;
 
 	constructor() {
 	}
 
-	public exit(code: number = 5) {
+	public exit(code = 5) {
 		console.log("Terminating...");
 		process.exit(code);
 	}
@@ -106,11 +107,11 @@ export class ParserEngine {
 	 */
 	private readProjectName(): string {
 		let projectName: string = null;
-		let filename            = path.resolve(this.projectPath, "package.json");
+		const filename            = path.resolve(this.projectPath, "package.json");
 
 		if (fs.existsSync(filename)) {
 			// eslint-disable-next-line @typescript-eslint/no-var-requires
-			let json    = require(filename);
+			const json    = require(filename);
 			projectName = json.name;
 		}
 
@@ -130,7 +131,7 @@ export class ParserEngine {
 		}
 
 		this.projectOptions = this.readConfig();
-		let projectName     = this.readProjectName();
+		const projectName     = this.readProjectName();
 
 		if (!Utils.isEmpty(projectName)) {
 			log(yellow("Parsing project: ") + bold(projectName) + " " + underline(this.projectPath));
@@ -142,7 +143,7 @@ export class ParserEngine {
 		this.distRoot = path.resolve(this.projectPath, this.projectOptions.outDir);
 		this.basePath = this.distRoot;
 
-		let tmpPath = path.resolve(this.distRoot, this.projectOptions.baseUrl);
+		const tmpPath = path.resolve(this.distRoot, this.projectOptions.baseUrl);
 
 		//
 		// If the baseUrl exist in the dist folder, the TS Compiler have re-used the src structure
@@ -161,12 +162,12 @@ export class ParserEngine {
 			console.log("Src path ::", this.srcRoot);
 		}
 
-		let fileList = new Array<string>();
+		const fileList = new Array<string>();
 
 		this.walkSync(this.distRoot, fileList, ".js");
 
 		for (let i = 0; i < fileList.length; i++) {
-			let filename = fileList[ i ];
+			const filename = fileList[ i ];
 			this.processFile(filename);
 		}
 
@@ -220,9 +221,10 @@ export class ParserEngine {
 
 			this.nrMappedPaths++;
 
-			// Path to required file relative to baseUrl (from tsconfig.json)
-			const requireMapped = jsRequire.replace(alias, mapping);
-			Utils.replaceDoubleSlashes(requireMapped);
+			const requireMapped = Utils.replaceDoubleSlashes(
+				// Path to required file relative to baseUrl (from tsconfig.json)
+				jsRequire.replace(alias, mapping)
+			);
 
 			// let absoluteJsRequire = path.join(this.basePath, requireMapped);
 
@@ -265,7 +267,7 @@ export class ParserEngine {
 	 */
 	processJsRequire(node: ArgumentListElement, sourceFilename: string): ArgumentListElement {
 		let resultNode: ArgumentListElement = node;
-		const requireInJsFile = Utils.safeGetAstNodeValue(node);
+		const requireInJsFile = Utils.safeGetAstNodeValue(node as Literal);
 
 		//
 		// Only proceed if the "require" contains a full file path, not
@@ -288,8 +290,8 @@ export class ParserEngine {
 	processFile(filename: string) {
 		this.nrFilesProcessed++;
 
-		let scope           = this;
-		let inputSourceCode = fs.readFileSync(filename, Const.FILE_ENCODING);
+		const scope           = this;
+		const inputSourceCode = fs.readFileSync(filename, Const.FILE_ENCODING);
 		let ast: Program | null = null;
 
 		try {
@@ -312,8 +314,8 @@ export class ParserEngine {
 			}
 		});
 
-		let option      = { comment: true, format: { compact: this.compactMode, quotes: "\"" } };
-		let finalSource = escodegen.generate(ast, option);
+		const option      = { comment: true, format: { compact: this.compactMode, quotes: "\"" } };
+		const finalSource = escodegen.generate(ast, option);
 
 		try {
 			if (!testRun) {
@@ -349,7 +351,7 @@ export class ParserEngine {
 		fileName = path.resolve(this.projectPath, fileName);
 		let fileData = fs.readFileSync(fileName, Const.FILE_ENCODING);
 
-		let jsonCS = new JsonCommentStripper();
+		const jsonCS = new JsonCommentStripper();
 		fileData   = jsonCS.stripComments(fileData);
 
 		try {
@@ -359,14 +361,14 @@ export class ParserEngine {
 			Logger.error(`JSON parser failed for file "${fileName}"`);
 		}
 
-		let compilerOpt = this.tsConfig.compilerOptions;
+		const compilerOpt = this.tsConfig.compilerOptions;
 
-		let reqFields          = [];
+		const reqFields          = [];
 		reqFields[ "baseUrl" ] = compilerOpt.baseUrl;
 		reqFields[ "outDir" ]  = compilerOpt.outDir;
 
-		for (let key in reqFields) {
-			let field = reqFields[ key ];
+		for (const key in reqFields) {
+			const field = reqFields[ key ];
 			if (Utils.isEmpty(field)) {
 				log(red(bold("Missing required field:")) + " \"" + bold(underline(key)) + "\"");
 				this.exit(22);
@@ -384,9 +386,9 @@ export class ParserEngine {
 	 */
 	private traverseSynTree(ast: Node, scope: ParserEngine, func: (a: Node) => void): void {
 		func(ast);
-		for (let key in ast) {
+		for (const key in ast) {
 			if (ast.hasOwnProperty(key)) {
-				let child = ast[ key ];
+				const child = ast[ key ];
 
 				if (typeof child === "object" && child !== null) {
 					if (Array.isArray(child)) {
@@ -422,20 +424,20 @@ export class ParserEngine {
 	 * @returns {Array<string>}
 	 */
 	public walkSync(dir: string, filelist: Array<string>, fileExtension?: string) {
-		let scope     = this;
-		let files     = fs.readdirSync(dir);
+		const scope     = this;
+		const files     = fs.readdirSync(dir);
 		filelist      = filelist || [];
 		fileExtension = fileExtension === undefined ? "" : fileExtension;
 
-		for (let file of files) {
+		for (const file of files) {
 			if (fs.statSync(path.join(dir, file)).isDirectory()) {
 				filelist = this.walkSync(path.join(dir, file), filelist, fileExtension);
 			}
 			else {
-				let tmpExt = path.extname(file);
+				const tmpExt = path.extname(file);
 
 				if (scope.matchExtension(tmpExt)) {
-					let fullFilename = path.join(dir, file);
+					const fullFilename = path.join(dir, file);
 					filelist.push(fullFilename);
 				}
 			}

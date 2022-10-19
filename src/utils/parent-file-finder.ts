@@ -32,7 +32,6 @@
 
 import * as fs   from "fs";
 import * as path from "path";
-import { Const } from "../tspath.const";
 import { Utils } from "./utils";
 
 export class FileFindResult {
@@ -52,9 +51,9 @@ export class ParentFileFinder {
 	 * @returns {FileFindResult}
 	 */
 	public static findFile(startPath: string, filename: string): FileFindResult {
-		let result = new FileFindResult();
-		let sep    = path.sep;
-		let parts  = startPath.split(sep);
+		const result = new FileFindResult();
+		const sep    = path.sep;
+		const parts  = startPath.split(sep);
 
 		let tmpStr: string = sep;
 

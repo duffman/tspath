@@ -31,25 +31,24 @@ import { argv as yargs } 	 from "yargs";
 import { bold, red, yellow } from "./utils/color";
 import { ParserEngine }      from "./parser-engine";
 import { Const }             from "./tspath.const";
-import { JsonFile }          from "./utils/json-file";
 import { ParentFileFinder }  from "./utils/parent-file-finder";
 
 export class TSPath {
 	private engine = new ParserEngine();
 
 	constructor() {
-		const pkg: any = new JsonFile("package.json");
+		// const pkg: any = new JsonFile("package.json");
 
 		log(yellow(`TSPath v${ Const.VERSION }`));
 		let filter = ["js"];
 		const force: boolean = yargs.force || yargs.f;
-		const verbose: boolean = yargs.verbose || yargs.v;
-		let projectPath = process.cwd();
-		let compactOutput = !yargs.preserve;
-		let findResult = ParentFileFinder.findFile(projectPath, Const.TS_CONFIG);
+		// const verbose: boolean = yargs.verbose || yargs.v;
+		const projectPath = process.cwd();
+		const compactOutput = !yargs.preserve;
+		const findResult = ParentFileFinder.findFile(projectPath, Const.TS_CONFIG);
 
 		if (yargs.ext || yargs.filter) {
-			let argFilter = yargs.ext ? yargs.ext : yargs.filter;
+			const argFilter = yargs.ext ? yargs.ext : yargs.filter;
 			filter = argFilter.split(",").map((ext) => {
 				return ext.replace(/\s/g, "");
 			});
@@ -66,7 +65,7 @@ export class TSPath {
 		if (force && findResult.fileFound) {
 			this.processPath(findResult.path);
 		} else if (findResult.fileFound) {
-			let confirm = new Confirm("Process project at: <" + findResult.path + "> ?").ask(answer => {
+			new Confirm("Process project at: <" + findResult.path + "> ?").ask((answer: boolean) => {
 				if (answer) {
 					this.processPath(findResult.path);
 				}

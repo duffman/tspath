@@ -16,7 +16,7 @@ module.exports = {
         "plugin:@typescript-eslint/recommended"
     ],
     rules: {
-        "prefer-const": "off",
+        "prefer-const": "warn",
         "@typescript-eslint/no-inferrable-types": "warn",
         "@typescript-eslint/no-empty-interface": "off",
         "@typescript-eslint/no-empty-function": "off",

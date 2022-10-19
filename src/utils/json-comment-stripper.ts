@@ -80,29 +80,29 @@ export class JsonCommentStripper {
 	}
 
 	parse(data: string): string {
-		let lineNum = 1;
-		let linePos = 1;
+		// let lineNum = 1;
+		// let linePos = 1;
 
-		let prevChar = "";
+		// let prevChar = "";
 		let currChar = "";
 		let aheadChar = "";
 
 		let chunk = "";
 
 		for (let i = 0; i < data.length; i++) {
-			prevChar = currChar;
+			// prevChar = currChar;
 			currChar = data[i];
 			aheadChar = data[i + 1];
 
-			linePos++;
+			// linePos++;
 
 			if (currChar == "\n") {
 				if (this.inState(JsonParserState.InLineComment)) {
 					this.setState(JsonParserState.None);
 				}
 
-				linePos = 1;
-				lineNum++;
+				// linePos = 1;
+				// lineNum++;
 			}
 
 			// Allow block comments everywhere except in quotes

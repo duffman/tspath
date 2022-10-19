@@ -7,15 +7,15 @@ import { blue, bold, cyan, magenta, redBright, yellow } from "./color";
 const log = console.log;
 
 export class Logger {
-	public static log(...data: any[]): void {
+	public static log(...data: unknown[]): void {
 		log(data);
 	}
 
-	public static error(...data: any[]): void {
+	public static error(...data: unknown[]): void {
 		console.error(data);
 	}
 
-	public static logException(label: string, e?: Error | any): void {
+	public static logException(label: string, e?: Error | string | unknown): void {
 		Logger.spit(2);
 
 		if (e instanceof Error) {
@@ -25,7 +25,7 @@ export class Logger {
 		}
 	}
 
-	public static pretty(doLog: boolean, label: string, obj: any): void {
+	public static pretty(doLog: boolean, label: string, obj: unknown): void {
 		Logger.spit(2);
 		Logger.log(doLog, label);
 		Logger.log(doLog, "--");
@@ -40,10 +40,10 @@ export class Logger {
 		}
 	}
 
-	public static logBase(colorFunc: (data: any) => string, logMessage: string, ...logData:any[]): void {
-		let dataArr = new Array<string>();
+	public static logBase(colorFunc: (data: unknown) => string, logMessage: string, ...logData: (string | unknown)[]): void {
+		const dataArr = new Array<string>();
 
-		for (let obj of logData) {
+		for (const obj of logData) {
 			let str = obj as string;
 			if (typeof obj === "object") {
 				str = JSON.stringify(obj);
@@ -54,15 +54,15 @@ export class Logger {
 		log(colorFunc(logMessage), colorFunc(dataArr.join(" ::: ") ));
 	}
 
-	public static logRed(logMessage: string, ...logData:any[]): void {
+	public static logRed(logMessage: string, ...logData: unknown[]): void {
 		Logger.logBase(redBright, logMessage, logData);
 	}
 
-	public static logYellow(logMessage: string, logData: any = ""): void {
+	public static logYellow(logMessage: string, logData = ""): void {
 		log(yellow(logMessage), logData);
 	}
 
-	public static logCyan(logMessage: string, logData: any = ""): void {
+	public static logCyan(logMessage: string, logData = ""): void {
 		if (logData) {
 			log(cyan(logMessage), logData);
 		} else {
@@ -71,15 +71,15 @@ export class Logger {
 	}
 
 	public static logText(logMessage: string, ...logText: string[]): void {
-		let text = logText.join(" :: ");
+		// const text = logText.join(" :: ");
 		log(bold(cyan(logMessage)), `:: ${logText}`);
 	}
 
-	public static logBlue(logMessage: string, logData: any = ""): void {
+	public static logBlue(logMessage: string, logData = ""): void {
 		console.log(blue(logMessage), logData);
 	}
 
-	public static logPurple(logMessage: string, logData: any = null): void {
+	public static logPurple(logMessage: string, logData = null): void {
 		if (logData == null) {
 			log(magenta(logMessage));
 		} else {

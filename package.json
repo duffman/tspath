@@ -13,6 +13,7 @@
 		"tspath": "node ./tspath.js",
 		"watch": "tsc -w",
 		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
 		"prepare": "husky install",
 		"prettify": "prettier ./lib/**/*.js --write",
 		"prebuild": "yarn lint",

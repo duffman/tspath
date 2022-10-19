@@ -6,7 +6,8 @@
 	"scripts": {
 		"copy": "copyfiles package.json lib",
 		"tspath": "node ./tspath.js",
-		"watch": "tsc -w"
+		"watch": "tsc -w",
+		"prettify": "prettier ./lib/**/*.js --write"
 	},
 	"preferGlobal": true,
 	"main": "index.js",

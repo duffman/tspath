@@ -22,10 +22,13 @@
 
  =----------------------------------------------------------------= */
 
-let esprima   = require("esprima");
-let escodegen = require("escodegen");
+const esprima   = require("esprima");
+const espree   = require("espree");
+
+const escodegen = require("escodegen");
 const chalk   = require("ansi-colors");
 
+import { UrlUtils }            from "dina-common";
 import { Const }               from "./tspath.const";
 import { Logger }              from "./utils/logger";
 import { PathUtils }           from "./utils/path.utils";
@@ -34,7 +37,7 @@ import { JsonCommentStripper } from "./utils/json-comment-stripper";
 import { ProjectOptions }      from "./project-options";
 import * as fs                 from "fs";
 import * as path               from "path";
-import { DinaLogger }          from "dina-common";
+import { DLog }                from "dina-common";
 
 const log     = console.log;
 const testRun = false;
@@ -44,6 +47,8 @@ export class ParserEngine {
 
 	nrFilesProcessed: number = 0;
 	nrPathsProcessed: number = 0;
+	errors = new Array<string>();
+
 	srcRoot: string;
 	basePath: string;
 	distRoot: string;
@@ -163,10 +168,10 @@ export class ParserEngine {
 			console.log("Src path ::", this.srcRoot);
 		}
 
+		this.errors.length = 0;
 		let fileList = new Array<string>();
 
 		Logger.logPurple("Indexing files...");
-		console.log(this.distRoot);
 
 		this.walkSync(this.distRoot, fileList, ".js");
 
@@ -189,7 +194,13 @@ export class ParserEngine {
 		log(chalk.bold("Total paths processed:"), this.nrPathsProcessed);
 
 		console.timeEnd(PROCESS_TIME);
-		log(chalk.bold.green("Project is prepared, now run it normally!"));
+
+		if (this.errors.length) {
+			log(chalk.bold.yellow("Process completed with errors:"));
+			log(this.errors);
+		} else {
+			log(chalk.bold.green("Project is prepared, now run it normally!"));
+		}
 	}
 
 	private shouldSkipFile(filename: string): boolean {
@@ -325,7 +336,49 @@ export class ParserEngine {
 		let ast             = null;
 
 		try {
-			ast = esprima.parse(inputSourceCode, { raw: true, tokens: true, range: true, comment: true });
+			//
+			// Legacy Esprima
+			// ast = esprima.parse(inputSourceCode, { raw: true, tokens: true, range: true, comment: true });
+			//
+
+			const options = {
+				// attach range information to each node
+				range: false,
+
+				// attach line/column location information to each node
+				loc: false,
+
+				// create a top-level comments array containing all comments
+				comment: false,
+
+				// create a top-level tokens array containing all tokens
+				tokens: false,
+
+				// Set to 3, 5 (the default), 6, 7, 8, 9, 10, 11, 12, 13 or 14 to specify the version of ECMAScript syntax you want to use.
+				// You can also set to 2015 (same as 6), 2016 (same as 7), 2017 (same as 8), 2018 (same as 9), 2019 (same as 10), 2020 (same as 11), 2021 (same as 12), 2022 (same as 13) or 2023 (same as 14) to use the year-based naming.
+				// You can also set "latest" to use the most recently supported version.
+				ecmaVersion: "latest",
+
+				//allowReserved: true, // only allowed when ecmaVersion is 3
+
+				// specify which type of script you're parsing ("script", "module", or "commonjs")
+				sourceType: "commonjs",
+
+				// specify additional language features
+				ecmaFeatures: {
+
+					// enable JSX parsing
+					jsx: false,
+
+					// enable return in global scope (set to true automatically when sourceType is "commonjs")
+					globalReturn: false,
+
+					// enable implied strict mode (if ecmaVersion >= 5)
+					impliedStrict: false
+				}
+			}
+
+			ast = espree.parse(inputSourceCode, options);
 		}
 		catch (error) {
 			Logger.logRed("Unable to parse file:", filename);
@@ -335,7 +388,8 @@ export class ParserEngine {
 			);
 
 			Logger.log("Error:", error);
-			this.exit();
+			this.errors.push(`Failed to parse file: ${filename}`);
+			//this.exit();
 		}
 
 		this.traverseSynTree(ast, this, (node) => {
@@ -344,17 +398,21 @@ export class ParserEngine {
 			}
 		});
 
-		let option      = { comment: true, format: { compact: this.compactMode, quotes: `"` } };
-		let finalSource = escodegen.generate(ast, option);
-
 		try {
+			let option      = { comment: true, format: { compact: this.compactMode, quotes: `"` } };
+			let finalSource = escodegen.generate(ast, option);
+
 			if (!testRun) {
 				this.saveFileContents(filename, finalSource);
 			}
 		}
 		catch (error) {
 			Logger.logRed(`Unable to write file: "${ filename }"`);
-			this.exit();
+			this.errors.push(`JS Generation failed for "${filename}"`);
+			console.log(
+				error
+			);
+			//this.exit();
 		}
 	}
 
@@ -389,7 +447,8 @@ export class ParserEngine {
 			this.tsConfig = JSON.parse(fileData);
 		}
 		catch (e) {
-			Logger.error(`JSON parser failed for file "${ fileName }"`);
+			Logger.error(`JSON parser failed for file "${ fileName }"`, e);
+			process.exit(45);
 		}
 
 		let compilerOpt = this.tsConfig.compilerOptions;
@@ -457,16 +516,19 @@ export class ParserEngine {
 	public walkSync(dir: string, filelist: Array<string>, fileExtension?: string) {
 		let scope = this;
 		let files = new Array<string>();
-		try {
 
+		try {
+			files = fs.readdirSync(dir);
 		}
 		catch (e) {
-			DinaLogger.error(`Unable to read directory "${ dir }"`, e);
+			DLog.error(`Unable to read directory "${ dir }"`, e);
 			process.exit(667);
 		}
 
 		filelist      = filelist || [];
 		fileExtension = fileExtension === undefined ? "" : fileExtension;
+
+		const ensureSlash = UrlUtils.ensureTrailingSlash;
 
 		for (let file of files) {
 			if (fs.statSync(path.join(dir, file)).isDirectory()) {

@@ -22,9 +22,7 @@
 
  =----------------------------------------------------------------= */
 
-const esprima   = require("esprima");
 const espree   = require("espree");
-
 const escodegen = require("escodegen");
 const chalk   = require("ansi-colors");
 

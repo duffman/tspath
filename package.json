@@ -1,6 +1,6 @@
 {
 	"name": "tspath",
-	"version": "2.6.1",
+	"version": "2.6.2",
 	"description": "TypeScript path alias resolver, re-writes JS files with relative paths according to @paths specified in tsconfig",
 	"license": "LGPL-2.1",
 	"scripts": {

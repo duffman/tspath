@@ -1,5 +1,6 @@
 dist
-
+*.lock
+yarn.lock
 bin
 bin/
 dist

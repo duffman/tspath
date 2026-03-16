@@ -88,7 +88,6 @@ $ tspath -f
 
 Say bye bye to the relative path hell!
 
-<<<<<<< HEAD
 
 
 # Const
@@ -179,11 +178,3 @@ To skip any file in your project, include the following comment anywhere in the 
 
 
   Say bye bye to the relative path hell!
-=======
-#### Options
-
-
-| Arg | Type | Description | Default |
-|--------|------|-------------|---------|
-| `-f` | `boolean` | `optional` - skip the confirmation prompt displayed before `tspath` parses the project (e.g. `tspath -f`) | `false` |
->>>>>>> 7b5420c0b1b2d142628c0ebc5192ad8edaf107bf
